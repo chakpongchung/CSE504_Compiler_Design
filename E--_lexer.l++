@@ -1,0 +1,40 @@
+%option noyywrap
+%option never-interactive
+
+%{
+#include "E--_lexer.tab.h"
+#include <iostream>
+
+using namespace std;
+
+const char* yyfilename="";
+int yylinenum=0;
+
+%}
+/* Definitions */
+
+DECIMAL_DIGIT  [0-9]
+UINTNUM		   {DECIMAL_DIGIT}+
+
+%%
+
+ /**************** Recognize operators ****************/
+
+"->"	{ return TOK_ARROW; }
+"?"	    { return TOK_QMARK; }
+
+    /* Fill in the other operators */
+
+ /**************** Recognize reserved words ****************/
+
+ /* Basic types */
+
+"enum"           { return TOK_ENUM; }
+
+ /**************** Unrecognized character ==> error ****************/
+
+. {
+	return TOK_SYNTAX_ERROR;
+}
+
+%%
