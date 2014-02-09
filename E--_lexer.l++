@@ -18,20 +18,17 @@ int yylinenum = 0;
 DECIMAL_DIGIT 						 [0-9]
 UINTNUM		  					 {DECIMAL_DIGIT}+
 TOK_HASH						 [#]
-RESERVED_WORDS						 [any|bit|bool|byte|class|double|else|enum|event|false|if|import|int|interface|print|return|string|true|void]			
-ID							[a-zA-Z_][a-zA-Z0-9_]*[^RESERVED_WORDS]
+ID							[a-zA-Z_][a-zA-Z0-9_]*
 STRING 							[a-zA-Z]*
 %%
 
 
 
 
-[ \n\t\r]+  		
-{ID}				{ yylval.cVal = yytext;printf("%s\n",yylval.cVal); return TOK_ID;}
-{UINTNUM}+		{  yylval.uVal = atoi(yytext);return TOK_UINTNUM;}
-{UINTNUM}+.{UINTNUM}+ { printf("%s\n",yytext); return TOK_DOUBLENUM;}
-{STRING}			{ return TOK_STRCONST;}
-{TOK_HASH}			{ return TOK_ID; printf("%s\n","Token #:");}
+" " {}
+
+
+{TOK_HASH}.*					{ yylval.cVal = yytext;return TOK_ID;}
 
  /**************** Recognize operators ****************/
 
@@ -69,7 +66,7 @@ STRING 							[a-zA-Z]*
 "^"			{ return TOK_BITXOR;}
 "<<"			{ return TOK_SHL;}
 ">>"			{ return TOK_SHR;}
-'\n'			{ ++yylinenum;}
+[\n|\r]			{ ++yylinenum;}
 
     /* Fill in the other operators */
 
@@ -98,7 +95,11 @@ STRING 							[a-zA-Z]*
 "bit"			{ return TOK_BIT;}
 
 
+{ID}			{ yylval.cVal = yytext; return TOK_ID;}
 
+{UINTNUM}+					{  yylval.uVal = atoi(yytext);return TOK_UINTNUM;}
+{UINTNUM}+.{UINTNUM}+ 				{ printf("%s\n",yytext); return TOK_DOUBLENUM;}
+{STRING}					{ return TOK_STRCONST;}
  /**************** Unrecognized character ==> error ****************/
 
 . {
