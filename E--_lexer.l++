@@ -16,7 +16,9 @@ int yylinenum = 0;
 /* Definitions */
 
 DECIMAL_DIGIT 						 [0-9]
-UINTNUM		  					 {DECIMAL_DIGIT}+
+EXP							 [[Ee][-+]?[0-9]+]
+UINTNUM		  					 {DECIMAL_DIGIT}+{EXP}
+
 TOK_HASH						 [#]
 ID							[a-zA-Z_][a-zA-Z0-9_]*
 STRING 							[a-zA-Z]*
@@ -28,7 +30,42 @@ STRING 							[a-zA-Z]*
 " " {}
 
 
-{TOK_HASH}.*					{ yylval.cVal = yytext;return TOK_ID;}
+{TOK_HASH}.*					{
+							 char *temp = strtok(yytext, " ");
+							  int count = 0, count1=0;
+        							while (count<3) {
+									//printf("%s", "INside while");
+									count++;
+									switch(count){
+									case 2: yylinenum = atoi(temp)-1; break;
+									case 3: 
+										{	
+										char *temp_filename = new char[40];
+										count1=0;
+        									while(*temp!=0)
+        									{
+          
+         									   if(*temp!='\"')
+                									{
+                     
+                    									temp_filename[count1++] = *temp;
+                   								
+                									}	
+                									*temp++;
+       										}	
+        									temp_filename[count1] ='\0';
+									        //printf("\n%s %s","Hi",temp_filename);
+        									yyfilename = temp_filename;printf("\n%s\n", yyfilename); break;
+										}
+									default: break;
+									}
+								
+								        temp = strtok(0, " ");
+      							    	}
+						
+							//printf("\n%s\n", yytext);
+							
+						}
 
  /**************** Recognize operators ****************/
 
@@ -98,7 +135,7 @@ STRING 							[a-zA-Z]*
 {ID}			{ yylval.cVal = yytext; return TOK_ID;}
 
 {UINTNUM}+					{  yylval.uVal = atoi(yytext);return TOK_UINTNUM;}
-{UINTNUM}+.{UINTNUM}+ 				{ printf("%s\n",yytext); return TOK_DOUBLENUM;}
+{UINTNUM}+.{UINTNUM}+ 				{  return TOK_DOUBLENUM;}
 {STRING}					{ return TOK_STRCONST;}
  /**************** Unrecognized character ==> error ****************/
 
