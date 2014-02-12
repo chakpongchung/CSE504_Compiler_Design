@@ -149,8 +149,32 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
                                                           if(*temp!='\"')
 	                                                         {
 
-                                                                   temp_string[count1++] = *temp;
+                                                                  // temp_string[count1++] = *temp;
+								   if(*temp == '\\')
+								   {
+									*temp++;
+									switch(*temp)
+									{
+										case 'n': temp_string[count1++] = '\n'; 
+											  break;
 
+										case 'b': temp_string[count1++] = '\b';
+											  break;
+
+										case 't': temp_string[count1++] = '\t';
+											  break;
+
+										case 'r': temp_string[count1++] = '\r';
+											  break;
+
+										case 'x': 
+											   break;
+										default: 
+											  temp_string[count1++] = *temp;
+											 break;
+									}
+								   }
+								
                                                                   }
                                                             *temp++;
                                                          }
