@@ -7,10 +7,15 @@
 
 using namespace std;
 
+
+
 const char* yyfilename = "";
 int yylinenum = 0;
 
+
 %}
+
+
 
 
 /* Definitions */
@@ -19,10 +24,13 @@ DIGIT	 						 [0-9]
 EXP							 {DIGIT}*([Ee][-+]?{DIGIT}+)
 HEX							"0x"[a-fA-F0-9]+
 UINTNUM		  					{DIGIT}+
-
+FLOAT_1							{UINTNUM}*"."({UINTNUM}*{EXP}?)
+FLOAT_2							{UINTNUM}+{EXP}
+FLOAT							({FLOAT_1}|{FLOAT_2})
 TOK_HASH						 [#]
 ID							[a-zA-Z_][a-zA-Z0-9_]*
-STRING 							"\"".*"\""
+STRING 							"\""([^\n\"]|(\\.))*(\"|\n)
+SPECIAL							"."[Ee][-+]?{DIGIT}*
 %%
 
 
@@ -133,7 +141,24 @@ STRING 							"\"".*"\""
 "bit"			{ return TOK_BIT;}
 
 
-{STRING}					{ yylval.cVal = yytext ; return TOK_STRCONST;}
+{STRING}					{ 	char *temp = yytext;
+                                                        char *temp_string = new char[40];
+                                                        int  count1=0;
+                                                        while(*temp!=0)
+                                                        {
+                                                          if(*temp!='\"')
+	                                                         {
+
+                                                                   temp_string[count1++] = *temp;
+
+                                                                  }
+                                                            *temp++;
+                                                         }
+                                                         temp_string[count1] ='\0';
+						
+							yylval.cVal = temp_string ;
+							return TOK_STRCONST;
+                                               }
 
 
 {UINTNUM}				        { 
@@ -146,8 +171,17 @@ STRING 							"\"".*"\""
 							return TOK_UINTNUM;
 						}
 
-{UINTNUM}"."({EXP}|{UINTNUM}) 		{
-								char *end; 
+{SPECIAL}					{      
+							yyless(1);
+							return TOK_DOT; 
+						}
+
+{FLOAT}				 		{ 
+								char *end;
+								//printf("%s", yytext);
+								//char *temp = yytext;
+								//if (temp[0] == '.' && (temp[1] == 'E'|| temp[1] == 'e'))
+								
 								yylval.dVal = strtod(yytext,&end); return TOK_DOUBLENUM;
 						}
 
