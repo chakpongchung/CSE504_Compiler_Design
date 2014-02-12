@@ -15,13 +15,14 @@ int yylinenum = 0;
 
 /* Definitions */
 
-DECIMAL_DIGIT 						 [0-9]
-EXP							 [[Ee][-+]?[0-9]+]
-UINTNUM		  					 {DECIMAL_DIGIT}+{EXP}
+DIGIT	 						 [0-9]
+EXP							 [[Ee][-+]?{DIGIT}+]
+HEX							"0x"[a-fA-F0-9]+
+UINTNUM		  					{DIGIT}+
 
 TOK_HASH						 [#]
 ID							[a-zA-Z_][a-zA-Z0-9_]*
-STRING 							[a-zA-Z]*
+STRING 							[\"][a-zA-Z]*[\"]
 %%
 
 
@@ -34,7 +35,7 @@ STRING 							[a-zA-Z]*
 							 char *temp = strtok(yytext, " ");
 							  int count = 0, count1=0;
         							while (count<3) {
-									//printf("%s", "INside while");
+									
 									count++;
 									switch(count){
 									case 2: yylinenum = atoi(temp)-1; break;
@@ -54,8 +55,8 @@ STRING 							[a-zA-Z]*
                 									*temp++;
        										}	
         									temp_filename[count1] ='\0';
-									        //printf("\n%s %s","Hi",temp_filename);
-        									yyfilename = temp_filename;printf("\n%s\n", yyfilename); break;
+									        
+        									yyfilename = temp_filename; break;
 										}
 									default: break;
 									}
@@ -71,13 +72,13 @@ STRING 							[a-zA-Z]*
 
 "->"			{ return TOK_ARROW; }	
 "?"			{ return TOK_QMARK; }
-"\/"			{ return TOK_PAT_OR;}
+"\\/"			{ return TOK_PAT_OR;}
 "&"			{ return TOK_BITAND;}
 "|"			{ return TOK_BITOR;}
 "~"			{ return TOK_BITNOT;}
 ":"			{ return TOK_COLON;}
 ","			{ return TOK_COMMA;}
-"."			{ return TOK_DOT;}
+"\."			{ return TOK_DOT;}
 ";"			{ return TOK_SEMICOLON;}
 "["			{ return TOK_LBRACK;}
 "]"			{ return TOK_RBRACK;}
@@ -94,7 +95,7 @@ STRING 							[a-zA-Z]*
 "!"			{ return TOK_NOT;}
 ">"			{ return TOK_GT;}
 "<"			{ return TOK_LT;}
-"="			{ return TOK_EQ;}
+"=="			{ return TOK_EQ;}
 
 "!="			{ return TOK_NE;}
 ">="			{ return TOK_GE;}
@@ -132,11 +133,27 @@ STRING 							[a-zA-Z]*
 "bit"			{ return TOK_BIT;}
 
 
-{ID}			{ yylval.cVal = yytext; return TOK_ID;}
-
-{UINTNUM}+					{  yylval.uVal = atoi(yytext);return TOK_UINTNUM;}
-{UINTNUM}+.{UINTNUM}+ 				{  return TOK_DOUBLENUM;}
 {STRING}					{ return TOK_STRCONST;}
+
+
+{UINTNUM}				        { 
+							printf("%s", yytext);
+							yylval.uVal = strtol(yytext,NULL,10);
+							return TOK_UINTNUM;
+						}
+
+{HEX}						{
+							printf("%s", yytext);
+							yylval.uVal = strtol(yytext,NULL,16);
+							return TOK_UINTNUM;
+						}
+
+{UINTNUM}"."({UINTNUM}*|{EXP})+ 		{
+								char *end; printf("%s",yytext);
+								yylval.dVal = strtod(yytext,&end); return TOK_DOUBLENUM;
+						}
+
+{ID}					{ yylval.cVal = yytext; return TOK_ID;}
  /**************** Unrecognized character ==> error ****************/
 
 . {
