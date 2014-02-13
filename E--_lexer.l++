@@ -142,45 +142,77 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 
 
 {STRING}					{ 	char *temp = yytext;
-                                                        char *temp_string = new char[40];
+                                                        char *temp_string = new char[400];
                                                         int  count1=0;
+							//printf("%s", temp);
                                                         while(*temp!=0)
                                                         {
-                                                          if(*temp!='\"')
-	                                                         {
-
-                                                                  // temp_string[count1++] = *temp;
-								   if(*temp == '\\')
+								if(*temp!='\"')
+								{
+									temp_string[count1++] = *temp;
+								}
+								*temp++;
+							}
+							temp_string[count1] = '\0';
+							printf("%s\n", temp_string);
+							char *final_str = new char[400];
+							count1 = 0;
+							while(*temp_string!=0)
+							{ 
+								//printf("%c", *temp_string);
+								   if(*temp_string == '\\')
 								   {
-									*temp++;
-									switch(*temp)
+								        *temp_string++;
+								//	printf("%c", *temp_string);
+									switch(*temp_string)
 									{
-										case 'n': temp_string[count1++] = '\n'; 
+										case 'n': final_str[count1++] = '\n'; 
 											  break;
 
-										case 'b': temp_string[count1++] = '\b';
+										case 'b': final_str[count1++] = '\b';
 											  break;
 
-										case 't': temp_string[count1++] = '\t';
+										case 't': final_str[count1++] = '\t';
 											  break;
 
-										case 'r': temp_string[count1++] = '\r';
+										case 'r': final_str[count1++] = '\r';
 											  break;
 
 										case 'x': 
+											 {
+											  char *hex_num = new char[7];
+											  for(int i=0;i<7;i++)
+												hex_num[i]='\0';
+											  hex_num[0] = '0';
+											  hex_num[1] = 'x';
+											  hex_num[2] = '0';
+											  hex_num[3] = '0';	  	
+											  hex_num[4] = *(++temp_string);
+											  hex_num[5] = *(++temp_string);
+											  hex_num[6] = '\0';
+											  int l1 = strtol(hex_num, NULL, 16);
+											 // printf("%s",hex_num);
+												final_str[count1++] = l1;
+												
 											   break;
+											}
 										default: 
-											  temp_string[count1++] = *temp;
+											  final_str[count1++] = *temp_string;
 											 break;
 									}
 								   }
+								else
+								{
+									final_str[count1++] = *temp_string;
+								}
 								
-                                                                  }
-                                                            *temp++;
+                                                                  
+                                                            *temp_string++;
                                                          }
-                                                         temp_string[count1] ='\0';
+							
+                                                        final_str[count1] ='\0';
 						
-							yylval.cVal = temp_string ;
+							yylval.cVal = final_str ;
 							return TOK_STRCONST;
                                                }
 
