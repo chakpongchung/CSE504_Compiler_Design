@@ -99,6 +99,7 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 "*"			{ return TOK_MULT;}
 "/"			{ return TOK_DIV;}
 "="			{ return TOK_ASSIGN;}
+"||"			{ return TOK_OR;}
 "&&"			{ return TOK_AND;}
 "!"			{ return TOK_NOT;}
 ">"			{ return TOK_GT;}
@@ -143,27 +144,28 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 
 {STRING}					{ 	char *temp = yytext;
                                                         char *temp_string = new char[400];
-                                                        int  count1=0;
-							//printf("%s", temp);
-                                                        while(*temp!=0)
+                                                        int  count =0 ,count1=0;
+                                                        while(temp[count]!='\0')
                                                         {
-								if(*temp!='\"')
+								if((temp[count]!='"'))
 								{
-									temp_string[count1++] = *temp;
+									temp_string[count1++] = temp[count];
 								}
-								*temp++;
+								else
+								{
+									if(temp[count] == '"' && (count1>0 && temp_string[count1-1]=='\\'))
+									temp_string[count1++] = '"';
+								}
+							count++;
 							}
 							temp_string[count1] = '\0';
-							printf("%s\n", temp_string);
 							char *final_str = new char[400];
 							count1 = 0;
 							while(*temp_string!=0)
 							{ 
-								//printf("%c", *temp_string);
 								   if(*temp_string == '\\')
 								   {
 								        *temp_string++;
-								//	printf("%c", *temp_string);
 									switch(*temp_string)
 									{
 										case 'n': final_str[count1++] = '\n'; 
