@@ -7,8 +7,6 @@
 
 using namespace std;
 
-
-
 const char* yyfilename = "";
 int yylinenum = 0;
 
@@ -30,7 +28,7 @@ FLOAT							({FLOAT_1}|{FLOAT_2})
 TOK_HASH						 [#]
 ID							[a-zA-Z_][a-zA-Z0-9_]*
 STRING 							"\""([^\n\"]|(\\.))*(\"|\n)
-SPECIAL							"."[Ee][-+]?{DIGIT}*
+EXP_CORNER_CASE							"."[Ee][-+]?{DIGIT}*
 %%
 
 
@@ -46,8 +44,10 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 									
 									count++;
 									switch(count){
-									case 2: yylinenum = atoi(temp)-1; break;
+									case 2: yylinenum = atoi(temp)-1; break;				/* HANDLING LINE NUMBERS */
 									case 3: 
+																		/* HANDLING FILENAMES */
+
 										{	
 										char *temp_filename = new char[40];
 										count1=0;
@@ -71,8 +71,6 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 								
 								        temp = strtok(0, " ");
       							    	}
-						
-							//printf("\n%s\n", yytext);
 							
 						}
 
@@ -147,12 +145,14 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
                                                         int  count =0 ,count1=0;
                                                         while(temp[count]!='\0')
                                                         {
+
 								if((temp[count]!='"'))
-								{
+								{ 	
+																		/* EXTRACTING CHARACTERS FROM WITHIN QUOTES */
 									temp_string[count1++] = temp[count];
 								}
 								else
-								{
+								{											/* HANDLING ESCAPED QUOTES*/
 									if(temp[count] == '"' && (count1>0 && temp_string[count1-1]=='\\'))
 									temp_string[count1++] = '"';
 								}
@@ -162,7 +162,7 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 							char *final_str = new char[400];
 							count1 = 0;
 							while(*temp_string!=0)
-							{ 
+							{											/* HANDLING BACKSLASH SPECIAL CASES */ 
 								   if(*temp_string == '\\')
 								   {
 								        *temp_string++;
@@ -180,7 +180,7 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 										case 'r': final_str[count1++] = '\r';
 											  break;
 
-										case 'x': 
+										case 'x': 							/* HANDLING HEXADECIMAL NUMBERS WITHIN STRING CONSTANTS */
 											 {
 											  char *hex_num = new char[7];
 											  for(int i=0;i<7;i++)
@@ -193,8 +193,7 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 											  hex_num[5] = *(++temp_string);
 											  hex_num[6] = '\0';
 											  int l1 = strtol(hex_num, NULL, 16);
-											 // printf("%s",hex_num);
-												final_str[count1++] = l1;
+											  final_str[count1++] = l1;
 												
 											   break;
 											}
@@ -204,7 +203,7 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 									}
 								   }
 								else
-								{
+								{										/* COPYING THE REMAINING CHARACTERS AFTER HANDLING BACKSLASH SPECIAL CASES IF ANY*/
 									final_str[count1++] = *temp_string;
 								}
 								
@@ -229,17 +228,14 @@ SPECIAL							"."[Ee][-+]?{DIGIT}*
 							return TOK_UINTNUM;
 						}
 
-{SPECIAL}					{      
+{EXP_CORNER_CASE}				{
+																		/* HANDLING THE CORNER CASE OF FLOATS WHERE EXPONENTS CAN BE OF FORM .E */      
 							yyless(1);
 							return TOK_DOT; 
 						}
 
 {FLOAT}				 		{ 
 								char *end;
-								//printf("%s", yytext);
-								//char *temp = yytext;
-								//if (temp[0] == '.' && (temp[1] == 'E'|| temp[1] == 'e'))
-								
 								yylval.dVal = strtod(yytext,&end); return TOK_DOUBLENUM;
 						}
 
