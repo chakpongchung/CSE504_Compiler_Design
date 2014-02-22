@@ -1,0 +1,224 @@
+Terminals unused in grammar
+
+   TOK_LEX_ERROR
+   TOK_PAT_STAR
+   TOK_PAT_OR
+   TOK_PAT_NOT
+   TOK_PLUS
+   TOK_MINUS
+   TOK_UMINUS
+   TOK_MULT
+   TOK_DIV
+   TOK_MOD
+   TOK_BITAND
+   TOK_BITOR
+   TOK_BITNOT
+   TOK_BITXOR
+   TOK_SHL
+   TOK_SHR
+   TOK_GT
+   TOK_LT
+   TOK_GE
+   TOK_LE
+   TOK_EQ
+   TOK_NE
+   TOK_AND
+   TOK_OR
+   TOK_NOT
+   TOK_COMMA
+   TOK_ASSIGN
+   TOK_COLON
+   TOK_ARROW
+   TOK_LBRACE
+   TOK_RBRACE
+   TOK_LPAREN
+   TOK_RPAREN
+   TOK_IF
+   TOK_ELSE
+   TOK_CLASS
+   TOK_RETURN
+   TOK_EVENT
+   TOK_ANY
+   TOK_PRINT
+   TOK_ULONGNUM
+   TOK_UINTNUM
+   TOK_DOUBLENUM
+   TOK_VOID
+   TOK_STRING
+   TOK_STRCONST
+   TOK_INT
+   TOK_UNSIGNED
+   TOK_BOOL
+   TOK_BYTE
+   TOK_DOUBLE
+   TOK_SHORT
+   TOK_LONG
+   TOK_TRUE
+   TOK_FALSE
+   TOK_IDENT
+
+
+Grammar
+
+    0 $accept: specification $end
+
+    1 specification: ifc_decl_star rule_star
+
+    2 ifc_decl_star: /* empty */
+    3              | ifc_decl_star ifc_decl
+    4              | ifc_decl_star error TOK_SEMICOLON
+
+    5 ifc_decl: TOK_SEMICOLON
+
+    6 rule_star: /* empty */
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256) 4
+TOK_LEX_ERROR (258)
+TOK_PAT_STAR (259)
+TOK_PAT_OR (260)
+TOK_PAT_NOT (261)
+TOK_PLUS (262)
+TOK_MINUS (263)
+TOK_UMINUS (264)
+TOK_MULT (265)
+TOK_DIV (266)
+TOK_MOD (267)
+TOK_BITAND (268)
+TOK_BITOR (269)
+TOK_BITNOT (270)
+TOK_BITXOR (271)
+TOK_SHL (272)
+TOK_SHR (273)
+TOK_GT (274)
+TOK_LT (275)
+TOK_GE (276)
+TOK_LE (277)
+TOK_EQ (278)
+TOK_NE (279)
+TOK_AND (280)
+TOK_OR (281)
+TOK_NOT (282)
+TOK_COMMA (283)
+TOK_ASSIGN (284)
+TOK_SEMICOLON (285) 4 5
+TOK_COLON (286)
+TOK_ARROW (287)
+TOK_LBRACE (288)
+TOK_RBRACE (289)
+TOK_LPAREN (290)
+TOK_RPAREN (291)
+TOK_IF (292)
+TOK_ELSE (293)
+TOK_CLASS (294)
+TOK_RETURN (295)
+TOK_EVENT (296)
+TOK_ANY (297)
+TOK_PRINT (298)
+TOK_ULONGNUM (299)
+TOK_UINTNUM (300)
+TOK_DOUBLENUM (301)
+TOK_VOID (302)
+TOK_STRING (303)
+TOK_STRCONST (304)
+TOK_INT (305)
+TOK_UNSIGNED (306)
+TOK_BOOL (307)
+TOK_BYTE (308)
+TOK_DOUBLE (309)
+TOK_SHORT (310)
+TOK_LONG (311)
+TOK_TRUE (312)
+TOK_FALSE (313)
+TOK_IDENT (314)
+
+
+Nonterminals, with rules where they appear
+
+$accept (60)
+    on left: 0
+specification (61)
+    on left: 1, on right: 0
+ifc_decl_star (62)
+    on left: 2 3 4, on right: 1 3 4
+ifc_decl (63)
+    on left: 5, on right: 3
+rule_star (64)
+    on left: 6, on right: 1
+
+
+state 0
+
+    0 $accept: . specification $end
+
+    $default  reduce using rule 2 (ifc_decl_star)
+
+    specification  go to state 1
+    ifc_decl_star  go to state 2
+
+
+state 1
+
+    0 $accept: specification . $end
+
+    $end  shift, and go to state 3
+
+
+state 2
+
+    1 specification: ifc_decl_star . rule_star
+    3 ifc_decl_star: ifc_decl_star . ifc_decl
+    4              | ifc_decl_star . error TOK_SEMICOLON
+
+    error          shift, and go to state 4
+    TOK_SEMICOLON  shift, and go to state 5
+
+    $end  reduce using rule 6 (rule_star)
+
+    ifc_decl   go to state 6
+    rule_star  go to state 7
+
+
+state 3
+
+    0 $accept: specification $end .
+
+    $default  accept
+
+
+state 4
+
+    4 ifc_decl_star: ifc_decl_star error . TOK_SEMICOLON
+
+    TOK_SEMICOLON  shift, and go to state 8
+
+
+state 5
+
+    5 ifc_decl: TOK_SEMICOLON .
+
+    $default  reduce using rule 5 (ifc_decl)
+
+
+state 6
+
+    3 ifc_decl_star: ifc_decl_star ifc_decl .
+
+    $default  reduce using rule 3 (ifc_decl_star)
+
+
+state 7
+
+    1 specification: ifc_decl_star rule_star .
+
+    $default  reduce using rule 1 (specification)
+
+
+state 8
+
+    4 ifc_decl_star: ifc_decl_star error TOK_SEMICOLON .
+
+    $default  reduce using rule 4 (ifc_decl_star)

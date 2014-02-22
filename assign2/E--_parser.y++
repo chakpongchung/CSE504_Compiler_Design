@@ -1,0 +1,58 @@
+%{
+#include <iostream>
+extern int yylex();
+extern void yyerror(const char *s);
+extern void errMsg(const char *s);
+#define prt(x) cout << x << endl;
+using namespace std;
+%}
+
+%union{
+   char* cVal;
+   unsigned int uVal;
+   double dblVal;
+};
+
+/* Operators */
+
+%token TOK_LEX_ERROR TOK_PAT_STAR TOK_PAT_OR TOK_PAT_NOT
+%token TOK_PLUS TOK_MINUS TOK_UMINUS TOK_MULT TOK_DIV TOK_MOD 
+%token TOK_BITAND TOK_BITOR TOK_BITNOT TOK_BITXOR TOK_SHL TOK_SHR 
+%token TOK_GT TOK_LT TOK_GE TOK_LE TOK_EQ  TOK_NE TOK_AND TOK_OR TOK_NOT 
+%token TOK_COMMA TOK_ASSIGN TOK_SEMICOLON TOK_COLON TOK_ARROW
+%token TOK_LBRACE TOK_RBRACE TOK_LPAREN TOK_RPAREN
+
+/* Key words */
+
+%token TOK_IF TOK_ELSE TOK_CLASS TOK_RETURN TOK_EVENT TOK_ANY TOK_PRINT 
+%token TOK_ULONGNUM TOK_UINTNUM TOK_DOUBLENUM TOK_VOID TOK_STRING TOK_STRCONST 
+%token TOK_INT TOK_UNSIGNED TOK_BOOL TOK_BYTE TOK_DOUBLE TOK_SHORT
+%token TOK_LONG TOK_TRUE TOK_FALSE TOK_IDENT
+
+/*********************   Precedence and Associativity    ********************/
+
+
+/**************************************************************************/
+
+%start specification
+%%
+
+specification: ifc_decl_star rule_star {
+	prt("Spec");
+};
+
+ifc_decl_star: /* empty */ {
+}
+| ifc_decl_star ifc_decl {}
+| ifc_decl_star error TOK_SEMICOLON {
+	errMsg("Syntax error, expecting a declaration");
+}
+;
+
+ifc_decl: TOK_SEMICOLON /* Fill in the other rules */
+;
+
+rule_star: /* fill in */
+;
+
+%%
