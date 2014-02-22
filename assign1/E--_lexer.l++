@@ -1,0 +1,249 @@
+%option noyywrap
+%option never-interactive
+
+%{
+#include "E--_lexer.tab.h"
+#include <iostream>
+
+using namespace std;
+
+const char* yyfilename = "";
+int yylinenum = 0;
+
+
+%}
+
+
+
+
+/* Definitions */
+
+DIGIT	 						 [0-9]
+EXP							 {DIGIT}*([Ee][-+]?{DIGIT}+)
+HEX							"0x"[a-fA-F0-9]+
+UINTNUM		  					{DIGIT}+
+FLOAT_1							{UINTNUM}*"."({UINTNUM}*{EXP}?)
+FLOAT_2							{UINTNUM}+{EXP}
+FLOAT							({FLOAT_1}|{FLOAT_2})
+TOK_HASH						 [#]
+ID							[a-zA-Z_][a-zA-Z0-9_]*
+STRING 							"\""([^\n\"]|(\\.))*(\"|\n)
+EXP_CORNER_CASE							"."[Ee][-+]?{DIGIT}*
+%%
+
+
+
+
+" " {}
+
+
+{TOK_HASH}.*					{
+							 char *temp = strtok(yytext, " ");
+							  int count = 0, count1=0;
+        							while (count<3) {
+									
+									count++;
+									switch(count){
+									case 2: yylinenum = atoi(temp)-1; break;				/* HANDLING LINE NUMBERS */
+									case 3: 
+																		/* HANDLING FILENAMES */
+
+										{	
+										char *temp_filename = new char[40];
+										count1=0;
+        									while(*temp!=0)
+        									{
+          
+         									   if(*temp!='\"')
+                									{
+                     
+                    									temp_filename[count1++] = *temp;
+                   								
+                									}	
+                									*temp++;
+       										}	
+        									temp_filename[count1] ='\0';
+									        
+        									yyfilename = temp_filename; break;
+										}
+									default: break;
+									}
+								
+								        temp = strtok(0, " ");
+      							    	}
+							
+						}
+
+ /**************** Recognize operators ****************/
+
+"->"			{ return TOK_ARROW; }	
+"?"			{ return TOK_QMARK; }
+"\\/"			{ return TOK_PAT_OR;}
+"&"			{ return TOK_BITAND;}
+"|"			{ return TOK_BITOR;}
+"~"			{ return TOK_BITNOT;}
+":"			{ return TOK_COLON;}
+","			{ return TOK_COMMA;}
+"\."			{ return TOK_DOT;}
+";"			{ return TOK_SEMICOLON;}
+"["			{ return TOK_LBRACK;}
+"]"			{ return TOK_RBRACK;}
+"("			{ return TOK_LPAREN;}
+")"			{ return TOK_RPAREN;}
+"{"			{ return TOK_LBRACE;}
+"}"			{ return TOK_RBRACE;}
+"+"			{ return TOK_PLUS;}
+"-"			{ return TOK_MINUS;}
+"*"			{ return TOK_MULT;}
+"/"			{ return TOK_DIV;}
+"="			{ return TOK_ASSIGN;}
+"||"			{ return TOK_OR;}
+"&&"			{ return TOK_AND;}
+"!"			{ return TOK_NOT;}
+">"			{ return TOK_GT;}
+"<"			{ return TOK_LT;}
+"=="			{ return TOK_EQ;}
+
+"!="			{ return TOK_NE;}
+">="			{ return TOK_GE;}
+"<="			{ return TOK_LE;}
+"%"			{ return TOK_MOD;}
+"^"			{ return TOK_BITXOR;}
+"<<"			{ return TOK_SHL;}
+">>"			{ return TOK_SHR;}
+[\n|\r]			{ ++yylinenum;}
+
+    /* Fill in the other operators */
+
+ /**************** Recognize reserved words ****************/
+
+ /* Basic types */
+
+"enum"			{ return TOK_ENUM; }
+"interface"		{ return TOK_INTERFACE;}
+"bool"			{ return TOK_BOOL;}
+"class"			{ return TOK_CLASS;}
+"else"			{ return TOK_ELSE;}
+"false"			{ return TOK_FALSE;}
+"if"			{ return TOK_IF;}
+"return"		{ return TOK_RETURN;}
+"true"			{ return TOK_TRUE;}
+"void"			{ return TOK_VOID;}
+"int"			{ return TOK_INT;}
+"string"			{ return TOK_STRING;}
+"byte"			{ return TOK_BYTE;}
+"double"			{ return TOK_DOUBLE;}
+"print"			{ return TOK_PRINT;}
+"event"			{ return TOK_EVENT;}
+"any"			{ return TOK_ANY;}
+"import"			{ return TOK_USE;}
+"bit"			{ return TOK_BIT;}
+
+
+{STRING}					{ 	char *temp = yytext;
+                                                        char *temp_string = new char[400];
+                                                        int  count =0 ,count1=0;
+                                                        while(temp[count]!='\0')
+                                                        {
+
+								if((temp[count]!='"'))
+								{ 	
+																		/* EXTRACTING CHARACTERS FROM WITHIN QUOTES */
+									temp_string[count1++] = temp[count];
+								}
+								else
+								{											/* HANDLING ESCAPED QUOTES*/
+									if(temp[count] == '"' && (count1>0 && temp_string[count1-1]=='\\'))
+									temp_string[count1++] = '"';
+								}
+							count++;
+							}
+							temp_string[count1] = '\0';
+							char *final_str = new char[400];
+							count1 = 0;
+							while(*temp_string!=0)
+							{											/* HANDLING BACKSLASH SPECIAL CASES */ 
+								   if(*temp_string == '\\')
+								   {
+								        *temp_string++;
+									switch(*temp_string)
+									{
+										case 'n': final_str[count1++] = '\n'; 
+											  break;
+
+										case 'b': final_str[count1++] = '\b';
+											  break;
+
+										case 't': final_str[count1++] = '\t';
+											  break;
+
+										case 'r': final_str[count1++] = '\r';
+											  break;
+
+										case 'x': 							/* HANDLING HEXADECIMAL NUMBERS WITHIN STRING CONSTANTS */
+											 {
+											  char *hex_num = new char[7];
+											  for(int i=0;i<7;i++)
+												hex_num[i]='\0';
+											  hex_num[0] = '0';
+											  hex_num[1] = 'x';
+											  hex_num[2] = '0';
+											  hex_num[3] = '0';	  	
+											  hex_num[4] = *(++temp_string);
+											  hex_num[5] = *(++temp_string);
+											  hex_num[6] = '\0';
+											  int l1 = strtol(hex_num, NULL, 16);
+											  final_str[count1++] = l1;
+												
+											   break;
+											}
+										default: 
+											  final_str[count1++] = *temp_string;
+											 break;
+									}
+								   }
+								else
+								{										/* COPYING THE REMAINING CHARACTERS AFTER HANDLING BACKSLASH SPECIAL CASES IF ANY*/
+									final_str[count1++] = *temp_string;
+								}
+								
+                                                                  
+                                                            *temp_string++;
+                                                         }
+							
+                                                        final_str[count1] ='\0';
+						
+							yylval.cVal = final_str ;
+							return TOK_STRCONST;
+                                               }
+
+
+{UINTNUM}				        { 
+							yylval.uVal = strtol(yytext,NULL,10);
+							return TOK_UINTNUM;
+						}
+
+{HEX}						{
+							yylval.uVal = strtol(yytext,NULL,16);
+							return TOK_UINTNUM;
+						}
+
+{EXP_CORNER_CASE}				{
+																		/* HANDLING THE CORNER CASE OF FLOATS WHERE EXPONENTS CAN BE OF FORM .E */      
+							yyless(1);
+							return TOK_DOT; 
+						}
+
+{FLOAT}				 		{ 
+								char *end;
+								yylval.dVal = strtod(yytext,&end); return TOK_DOUBLENUM;
+						}
+
+{ID}					{ yylval.cVal = yytext; return TOK_ID;}
+ /**************** Unrecognized character ==> error ****************/
+
+. {
+	return TOK_SYNTAX_ERROR;
+}
+
+%%
