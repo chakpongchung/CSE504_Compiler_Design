@@ -30,6 +30,8 @@ using namespace std;
 %token<cVal>    TOK_STRCONST TOK_TRUE TOK_FALSE TOK_IDENT
 
 /*********************   Precedence and Associativity    ********************/
+
+%right          TOK_ELSE "then"
 %nonassoc       TOK_ASSIGN
 %left           TOK_PAT_OR
 %left           TOK_COLON
@@ -47,11 +49,9 @@ using namespace std;
 %left           TOK_MULT TOK_DIV TOK_MOD
 %right          TOK_UMINUS
 /*%left         where is left brac*/
-%left           TOK_DOT
-%right          TOK_ELSE "then"
 %right          TOK_LPAREN
 %left           TOK_RPAREN
-
+%left           TOK_DOT
 /**************************************************************************/
 
 %start specification
@@ -129,18 +129,26 @@ exp			: literal_prt
 ;
 
 
-rule_star			: event_pattern TOK_ARROW statement_decl TOK_SEMICOLON       { prt("Rule"); }
+rule			: event_pattern TOK_ARROW statement_decl       { prt("Rule"); }
+;
+
+rule_star			: rule
+				| rule_star rule
 ;
 
 event_pattern			: primitive_pattern {}				{ prt("PrimitivePat"); }
-				| TOK_PAT_NOT event_pattern			{ prt("!EventPat"); }
+				| TOK_NOT event_pattern				{ prt("!EventPat"); }
 				| event_pattern TOK_COLON event_pattern {}	{ prt("EventPat : EventPat"); }
 				| event_pattern TOK_PAT_OR event_pattern {}	{ prt("EventPat \\/ EventPat"); }
-				| event_pattern TOK_PAT_STAR event_pattern {}	{ prt("EventPat **"); }
+				| TOK_PAT_STAR event_pattern {}			{ prt("EventPat **"); }
 				| TOK_LPAREN event_pattern TOK_RPAREN	{}	{ prt("(EventPat)"); }
 ;
 
-primitive_pattern			: normal_event {}
+primitive_pattern		: pattern_type
+				| pattern_type TOK_BITOR exp
+;
+
+pattern_type				: normal_event {}
 					| any_event {}
 ;
 
@@ -150,17 +158,17 @@ any_event			: TOK_ANY{ prt("anyEvent"); }
 event_decl			: TOK_EVENT TOK_IDENT formal_param_list_decl 							{ prt("EventDecl"); }
 ;
 
-normal_event 			: TOK_IDENT variable_param_list_decl			{ prt("Normal Event"); }
+normal_event 			: TOK_IDENT variable_param_list_decl			{ prt("NormalEvent"); }
 ;
 
 /*Statements*/
 statement_decl			: TOK_SEMICOLON
-				| only_if_without_else
-				| only_if_without_else TOK_ELSE statement_decl
+				| only_if_without_else %prec "then"			{ prt("IfThenStmt"); }
+				| only_if_without_else TOK_ELSE statement_decl		{ prt("IfThenElseStmt"); }
 				| function_invocation TOK_SEMICOLON			{ prt("FunctionInvocationStmt"); }
 				| assignment_decl TOK_SEMICOLON				{ prt("AssignStmt"); }
 				| TOK_RETURN exp TOK_SEMICOLON 				{ prt("ReturnStmt");}
-				| compound_statement_decl
+				| compound_statement_star
 ;
 
 statement_decl_list		: /*empty*/
@@ -170,17 +178,25 @@ statement_decl_list		: /*empty*/
 function_invocation		: TOK_IDENT function_invocation_list	{ prt("FunctionInvocation"); }
 ;
 
-inside_function			: /*empty*/
-				| exp
+inside_function			: exp
+				| inside_function TOK_COMMA exp
 ;
 
-function_invocation_list	: TOK_LPAREN inside_function TOK_RPAREN
+function_list			: /*empty*/
+				| inside_function
+;
+
+function_invocation_list	: TOK_LPAREN function_list TOK_RPAREN
 ;
 
 only_if_without_else		: TOK_IF exp statement_decl
 ;
 
 compound_statement_decl		: TOK_LBRACE statement_decl_list TOK_RBRACE { prt("CompoundStmt"); }
+;
+
+compound_statement_star		: compound_statement_decl
+				| compound_statement_star TOK_SEMICOLON
 ;
 
 ref_exp				: TOK_IDENT					{ prt("RefExpr"); }
@@ -213,15 +229,18 @@ class_decl		: TOK_CLASS TOK_IDENT {}
 type_prt		: type_decl { prt("Type"); }
 ;
 
-type_decl		: TOK_INT {}
+base_type		: TOK_INT {}
 			| TOK_BOOL {}
 			| TOK_BYTE {}
 			| TOK_DOUBLE {}
 			| TOK_SHORT {}
 			| TOK_VOID {}
 			| TOK_LONG {}
+;
+
+type_decl		: base_type		
 			| TOK_STRING {}
-			| TOK_UNSIGNED type_decl{}
+			| TOK_UNSIGNED base_type {}
 ;
 
 param_list		: /* empty */ {}
