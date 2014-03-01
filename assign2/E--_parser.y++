@@ -37,22 +37,82 @@ using namespace std;
 %start specification
 %%
 
-specification: ifc_decl_star rule_star {
-	prt("Spec");
-};
-
-ifc_decl_star: /* empty */ {
-}
-| ifc_decl_star ifc_decl {}
-| ifc_decl_star error TOK_SEMICOLON {
-	errMsg("Syntax error, expecting a declaration");
-}
+specification		: ifc_decl_star rule_star { prt("Spec"); }
 ;
 
-ifc_decl: TOK_SEMICOLON /* Fill in the other rules */
+ifc_decl_star		: /* empty */ {}
+			| ifc_decl_star ifc_decl {}
+			| ifc_decl_star error TOK_SEMICOLON { errMsg("Syntax error, expecting a declaration"); }
 ;
 
-rule_star: /* fill in */
+ifc_decl		: class_decl TOK_SEMICOLON { prt("ClassDecl"); }
+			| function_decl {}
+ 			| event_decl {}
+			| variable_decl {}
+			| TOK_SEMICOLON {}
 ;
+ /* Fill in the other rules */
+
+
+
+rule_star		: /* fill in */
+;
+
+
+event_decl		: TOK_EVENT
+;
+
+variable_decl		: TOK_IDENT
+;
+
+class_decl		: TOK_CLASS TOK_IDENT {}
+;
+
+type_prt		: type_decl { prt("Type"); }
+;
+
+type_decl		: TOK_INT {}
+			| TOK_BOOL {}
+			| TOK_BYTE {}
+			| TOK_DOUBLE {}
+			| TOK_SHORT {}
+			| TOK_ULONGNUM {}
+			| TOK_UINTNUM {}
+			| TOK_VOID {}
+			| TOK_STRING {}
+			| TOK_STRCONST {}
+			| TOK_UNSIGNED type_decl {}
+;
+
+param_list		: /* empty */ {}
+			| param_decl {}
+			| param_decl TOK_COMMA param_decl {}
+;
+
+param_decl		: type_prt TOK_IDENT{ prt("FormalParam"); }
+;
+
+formal_param_list_decl	: TOK_LPAREN param_list TOK_RPAREN { prt("FormalParamList"); }
+;
+
+function_decl		: type_prt TOK_IDENT formal_param_list_decl {}
+;
+
 
 %%
+void yyerror(string s)
+{
+  extern int yylineno;	// defined and maintained in lex.c
+  extern char *yytext;	// defined and maintained in lex.c
+  
+  cerr << "ERROR: " << s << " at symbol \"" << yytext;
+  cerr << "\" on line " << yylineno << endl;
+  exit(1);
+}
+
+void yyerror(char *s)
+{
+  yyerror(string(s));
+}
+
+
