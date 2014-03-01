@@ -15,10 +15,8 @@ using namespace std;
 
 /* Operators */
 
-%token TOK_LEX_ERROR TOK_PAT_STAR TOK_PAT_OR TOK_PAT_NOT
-%token TOK_PLUS TOK_MINUS TOK_UMINUS TOK_MULT TOK_DIV TOK_MOD 
-%token TOK_BITAND TOK_BITOR TOK_BITNOT TOK_BITXOR TOK_SHL TOK_SHR 
-%token TOK_GT TOK_LT TOK_GE TOK_LE TOK_EQ  TOK_NE TOK_AND TOK_OR TOK_NOT 
+%token TOK_LEX_ERROR
+%token TOK_GT TOK_LT TOK_GE TOK_LE TOK_EQ  TOK_NE 
 %token TOK_COMMA TOK_ASSIGN TOK_SEMICOLON TOK_COLON TOK_ARROW
 %token TOK_LBRACE TOK_RBRACE TOK_LPAREN TOK_RPAREN
 
@@ -31,6 +29,21 @@ using namespace std;
 
 /*********************   Precedence and Associativity    ********************/
 
+%left 	TOK_PAT_OR
+%left 	TOK_COLON
+%left 	TOK_PAT_STAR
+%right 	TOK_PAT_NOT
+%left 	TOK_OR TOK_BITXOR
+%left	TOK_AND
+%right	TOK_NOT
+%left	TOK_BITOR
+%left 	TOK_BITAND
+%right 	TOK_BITNOT
+%left	TOK_SHL TOK_SHR		
+%left	TOK_PLUS TOK_MINUS
+%left 	TOK_MULT TOK_DIV TOK_MOD
+%right 	TOK_UMINUS
+%left	TOK_DOT
 
 /**************************************************************************/
 
@@ -51,8 +64,56 @@ ifc_decl		: class_decl TOK_SEMICOLON { prt("ClassDecl"); }
 			| variable_decl {}
 			| TOK_SEMICOLON {}
 ;
- /* Fill in the other rules */
 
+
+integer_literal_decl	: TOK_UINTNUM
+;
+
+double_literal_decl	: TOK_DOUBLENUM
+;
+
+bool_literal_decl	: TOK_TRUE
+			| TOK_FALSE
+;
+
+long_literal_decl	: TOK_ULONGNUM
+;
+
+literal_decl 		: integer_literal_decl {}
+			| TOK_STRCONST {}
+			| double_literal_decl {}
+			| bool_literal_decl {}
+			| long_literal_decl {}
+;
+
+literal_prt		: literal_decl { prt("Literal"); }
+;
+
+exp			: literal_prt		
+			| exp TOK_PLUS exp				{ prt("Exp + Exp"); }
+        		| exp TOK_MINUS exp    				{ prt("Exp - Exp");  }
+        		| exp TOK_MULT exp    				{ prt("Exp * Exp"); }
+        		| exp TOK_DIV exp     				{ prt("Exp / Exp"); }
+			| exp TOK_AND exp				{ prt("Exp && Exp"); }
+			| exp TOK_BITAND exp				{ prt("Exp & Exp"); }
+			| exp TOK_BITOR exp				{ prt("Exp | Exp"); }
+			| exp TOK_GT exp				{ prt("Exp > Exp"); }
+			| exp TOK_GE exp				{ prt("Exp >= Exp"); }
+			| exp TOK_LT exp				{ prt("Exp < Exp"); }
+			| exp TOK_LE exp				{ prt("Exp <= Exp"); }
+			| exp TOK_OR exp				{ prt("Exp || Exp"); }
+			| exp TOK_SHL exp				{ prt("Exp << Exp"); }
+			| exp TOK_SHR exp				{ prt("Exp >> Exp"); }
+        		| exp TOK_BITXOR exp    			{ prt("Exp ^ Exp"); }
+        		| exp TOK_EQ exp    				{ prt("Exp == Exp"); }
+        		| exp TOK_NE exp    				{ prt("Exp != Exp"); }
+        		| TOK_BITNOT exp        			{ prt("~Exp"); }
+        		| TOK_UMINUS exp        			{ prt("-Exp"); }
+        		| TOK_NOT exp        				{ prt("!Exp"); }
+        		| TOK_LPAREN exp TOK_RPAREN			{ prt("(Exp)"); }
+         
+
+;
 
 
 rule_star		: /* fill in */
@@ -62,7 +123,15 @@ rule_star		: /* fill in */
 event_decl		: TOK_EVENT
 ;
 
-variable_decl		: TOK_IDENT
+variable_name		: TOK_IDENT								{ prt("VariableDecl"); }
+			| TOK_IDENT TOK_ASSIGN exp						{ prt("VariableDecWithInit"); }
+;
+
+variable_name_decl	: variable_name
+			| variable_name_decl TOK_COMMA variable_name
+;
+
+variable_decl		: type_prt variable_name_decl TOK_SEMICOLON	 			
 ;
 
 class_decl		: TOK_CLASS TOK_IDENT {}
@@ -76,17 +145,14 @@ type_decl		: TOK_INT {}
 			| TOK_BYTE {}
 			| TOK_DOUBLE {}
 			| TOK_SHORT {}
-			| TOK_ULONGNUM {}
-			| TOK_UINTNUM {}
 			| TOK_VOID {}
+			| TOK_LONG {}
 			| TOK_STRING {}
-			| TOK_STRCONST {}
-			| TOK_UNSIGNED type_decl {}
 ;
 
 param_list		: /* empty */ {}
 			| param_decl {}
-			| param_decl TOK_COMMA param_decl {}
+			| param_list TOK_COMMA param_decl {}
 ;
 
 param_decl		: type_prt TOK_IDENT{ prt("FormalParam"); }
@@ -95,7 +161,7 @@ param_decl		: type_prt TOK_IDENT{ prt("FormalParam"); }
 formal_param_list_decl	: TOK_LPAREN param_list TOK_RPAREN { prt("FormalParamList"); }
 ;
 
-function_decl		: type_prt TOK_IDENT formal_param_list_decl {}
+function_decl		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
 ;
 
 
