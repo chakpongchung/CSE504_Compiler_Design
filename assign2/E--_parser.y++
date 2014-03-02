@@ -58,6 +58,7 @@ using namespace std;
 %%
 
 specification		: ifc_decl_star rule_star { prt("Spec"); }
+			| /*empty*/ { errMsg("Must contain at least one rule"); }
 ;
 
 ifc_decl_star		: /* empty */ {}
@@ -136,7 +137,7 @@ rule_star			: rule
 				| rule_star rule
 ;
 
-event_pattern			: primitive_pattern {}				{ prt("PrimitivePat"); }
+event_pattern			: primitive_pattern {}				
 				| TOK_NOT event_pattern				{ prt("!EventPat"); }
 				| event_pattern TOK_COLON event_pattern {}	{ prt("EventPat : EventPat"); }
 				| event_pattern TOK_PAT_OR event_pattern {}	{ prt("EventPat \\/ EventPat"); }
@@ -144,8 +145,9 @@ event_pattern			: primitive_pattern {}				{ prt("PrimitivePat"); }
 				| TOK_LPAREN event_pattern TOK_RPAREN	{}	{ prt("(EventPat)"); }
 ;
 
-primitive_pattern		: pattern_type
-				| pattern_type TOK_BITOR exp
+primitive_pattern		: pattern_type					{ prt("PrimitivePat"); }
+				| pattern_type TOK_BITOR exp			{ prt("PrimitivePatWithCond"); }
+
 ;
 
 pattern_type				: normal_event {}
@@ -189,6 +191,22 @@ function_list			: /*empty*/
 function_invocation_list	: TOK_LPAREN function_list TOK_RPAREN
 ;
 
+/* Function body */
+
+variable_decl_star		: variable_param_list
+				| variable_decl_star variable_param_list
+;
+
+
+function_body_decl		: variable_decl_star statement_decl_list
+				| statement_decl_list
+;
+
+function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{ prt("FunctionBody"); }
+;
+
+/* If and Compund statements */
+
 only_if_without_else		: TOK_IF exp statement_decl
 ;
 
@@ -202,6 +220,12 @@ compound_statement_star		: compound_statement_decl
 ref_exp				: TOK_IDENT					{ prt("RefExpr"); }
 ;
 
+/* Variable parameter list */
+
+variable_param_list_star	: /*empty*/
+				| variable_param_list
+;
+
 variable_param_list		: variable_param_decl {}
 				| variable_param_list TOK_COMMA variable_param_decl {}
 ;
@@ -209,7 +233,7 @@ variable_param_list		: variable_param_decl {}
 variable_param_decl		: TOK_IDENT{ prt("EventFormalParam"); }
 ;
 
-variable_param_list_decl	: TOK_LPAREN variable_param_list TOK_RPAREN {}
+variable_param_list_decl	: TOK_LPAREN variable_param_list_star TOK_RPAREN {}
 ;
 
 variable_name		: TOK_IDENT								{ prt("VariableDecl"); }
@@ -222,6 +246,8 @@ variable_name_decl	: variable_name
 
 variable_decl		: type_prt variable_name_decl TOK_SEMICOLON	 			
 ;
+
+/* Class and base type */
 
 class_decl		: TOK_CLASS TOK_IDENT {}
 ;
@@ -241,22 +267,29 @@ base_type		: TOK_INT {}
 type_decl		: base_type		
 			| TOK_STRING {}
 			| TOK_UNSIGNED base_type {}
+			| TOK_IDENT
 ;
 
-param_list		: /* empty */ {}
-			| param_decl {}
+param_list_star		: /* empty */
+			| param_list
+;
+
+param_list		: param_decl {}
 			| param_list TOK_COMMA param_decl {}
 ;
 
 param_decl		: type_prt TOK_IDENT{ prt("FormalParam"); }
 ;
 
-formal_param_list_decl	: TOK_LPAREN param_list TOK_RPAREN { prt("FormalParamList"); }
+formal_param_list_decl	: TOK_LPAREN param_list_star TOK_RPAREN { prt("FormalParamList"); }
 ;
 
-function_decl		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
+function_decl_only		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
 ;
 
+function_decl			: function_decl_only
+				| function_decl_only function_body_invoc
+;
 
 %%
 
