@@ -281,12 +281,17 @@ param_list_star		: /* empty */
 
 param_list			: param_decl {} 
 				| param_list TOK_COMMA param_decl { }
+				| 
 ;
 
-param_decl			: type_prt TOK_IDENT{ prt("FormalParam"); }
+param_decl			: type_prt TOK_IDENT{ prt("FormalParam");}
+				| type_prt error { errMsg("Error in event declaration, expecting formal parameters"); }
+				| error TOK_IDENT { errMsg("Error encountered while parsing event parameters"); }
 ;
 
-formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN { }
+formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN
+				| TOK_LPAREN param_list_star error { errMsg("Error in parsing event parameters, may be a missing \")\""); }
+				
 ;
 
 function_decl_only		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
