@@ -141,11 +141,11 @@ rule_event			: rule
 				| rule_star rule
 ;
 event_pattern			: primitive_pattern {}				
-				| event_pattern TOK_PAT_STAR {}			{ prt("EventPat **"); }
+				| event_pattern TOK_PAT_STAR 			{ prt("EventPat **"); }
 				| TOK_NOT event_pattern				{ prt("!EventPat"); }
-				| event_pattern TOK_PAT_OR event_pattern {}	{ prt("EventPat \\/ EventPat"); }
-				| event_pattern TOK_COLON event_pattern {}	{ prt("EventPat : EventPat"); }
-				| TOK_LPAREN event_pattern TOK_RPAREN	{}	{ prt("(EventPat)"); }
+				| event_pattern TOK_PAT_OR event_pattern 	{ prt("EventPat \\/ EventPat"); }
+				| event_pattern TOK_COLON event_pattern 	{ prt("EventPat : EventPat"); }
+				| TOK_LPAREN event_pattern TOK_RPAREN		{ prt("(EventPat)"); }
 ;
 
 primitive_pattern		: pattern_type					{ prt("PrimitivePat"); }
