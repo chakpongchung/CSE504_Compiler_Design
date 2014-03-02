@@ -175,6 +175,7 @@ statement_decl			: TOK_SEMICOLON
 				| assignment_decl TOK_SEMICOLON				{ prt("AssignStmt"); }
 				| TOK_RETURN exp TOK_SEMICOLON 				{ prt("ReturnStmt");}
 				| compound_statement_star
+				| error TOK_SEMICOLON					{errMsg("Syntax error while parsing a statement");}
 ;
 
 statement_decl_list		: statement_decl
@@ -285,6 +286,7 @@ param_list			: param_decl {}
 ;
 
 param_decl			: type_prt TOK_IDENT{ prt("FormalParam");}
+				| type_prt error { errMsg("Syntax error in formal parameter declaration"); }
 ;
 
 formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN
@@ -292,8 +294,8 @@ formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN
 ;
 
 function_decl_only		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
+				| type_prt error   {errMsg("Expecting a function declaration -- may be a missing function name");}
 ;
-
 function_decl			: function_decl_only
 				| function_decl_only function_body_invoc
 ;
