@@ -1,0 +1,162 @@
+Terminals unused in grammar
+
+   TOK_LEX_ERROR
+   TOK_PAT_STAR
+   TOK_PAT_OR
+   TOK_PAT_NOT
+   TOK_PLUS
+   TOK_MINUS
+   TOK_UMINUS
+   TOK_MULT
+   TOK_DIV
+   TOK_MOD
+   TOK_BITAND
+   TOK_BITOR
+   TOK_BITNOT
+   TOK_BITXOR
+   TOK_SHL
+   TOK_SHR
+   TOK_GT
+   TOK_LT
+   TOK_GE
+   TOK_LE
+   TOK_EQ
+   TOK_NE
+   TOK_AND
+   TOK_OR
+   TOK_NOT
+   TOK_COMMA
+   TOK_ASSIGN
+   TOK_SEMICOLON
+   TOK_COLON
+   TOK_ARROW
+   TOK_LBRACE
+   TOK_RBRACE
+   TOK_LPAREN
+   TOK_RPAREN
+   TOK_IF
+   TOK_ELSE
+   TOK_CLASS
+   TOK_RETURN
+   TOK_EVENT
+   TOK_ANY
+   TOK_PRINT
+   TOK_UINTNUM
+   TOK_DOUBLENUM
+   TOK_VOID
+   TOK_STRING
+   TOK_STRCONST
+   TOK_INT
+   TOK_UNSIGNED
+   TOK_BOOL
+   TOK_BYTE
+   TOK_DOUBLE
+   TOK_SHORT
+   TOK_TRUE
+   TOK_FALSE
+   TOK_IDENT
+   TOK_DOUBLE_COLON
+   TOK_LBRACK
+   TOK_DOT
+
+
+Grammar
+
+    0 $accept: specification $end
+
+    1 specification: /* empty */
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+TOK_LEX_ERROR (258)
+TOK_PAT_STAR (259)
+TOK_PAT_OR (260)
+TOK_PAT_NOT (261)
+TOK_PLUS (262)
+TOK_MINUS (263)
+TOK_UMINUS (264)
+TOK_MULT (265)
+TOK_DIV (266)
+TOK_MOD (267)
+TOK_BITAND (268)
+TOK_BITOR (269)
+TOK_BITNOT (270)
+TOK_BITXOR (271)
+TOK_SHL (272)
+TOK_SHR (273)
+TOK_GT (274)
+TOK_LT (275)
+TOK_GE (276)
+TOK_LE (277)
+TOK_EQ (278)
+TOK_NE (279)
+TOK_AND (280)
+TOK_OR (281)
+TOK_NOT (282)
+TOK_COMMA (283)
+TOK_ASSIGN (284)
+TOK_SEMICOLON (285)
+TOK_COLON (286)
+TOK_ARROW (287)
+TOK_LBRACE (288)
+TOK_RBRACE (289)
+TOK_LPAREN (290)
+TOK_RPAREN (291)
+TOK_IF (292)
+TOK_ELSE (293)
+TOK_CLASS (294)
+TOK_RETURN (295)
+TOK_EVENT (296)
+TOK_ANY (297)
+TOK_PRINT (298)
+TOK_UINTNUM (299)
+TOK_DOUBLENUM (300)
+TOK_VOID (301)
+TOK_STRING (302)
+TOK_STRCONST (303)
+TOK_INT (304)
+TOK_UNSIGNED (305)
+TOK_BOOL (306)
+TOK_BYTE (307)
+TOK_DOUBLE (308)
+TOK_SHORT (309)
+TOK_TRUE (310)
+TOK_FALSE (311)
+TOK_IDENT (312)
+TOK_DOUBLE_COLON (313)
+TOK_LBRACK (314)
+TOK_DOT (315)
+
+
+Nonterminals, with rules where they appear
+
+$accept (61)
+    on left: 0
+specification (62)
+    on left: 1, on right: 0
+
+
+state 0
+
+    0 $accept: . specification $end
+
+    $default  reduce using rule 1 (specification)
+
+    specification  go to state 1
+
+
+state 1
+
+    0 $accept: specification . $end
+
+    $end  shift, and go to state 2
+
+
+state 2
+
+    0 $accept: specification $end .
+
+    $default  accept
