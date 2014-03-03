@@ -1,0 +1,305 @@
+%{
+#include <iostream>
+extern int yylex();
+extern void yyerror(const char *s);
+extern void errMsg(const char *s);
+#define prt(x) cout << x << endl;
+using namespace std;
+%}
+
+%union{
+   char* cVal;
+   unsigned int uVal;
+   double dblVal;
+};
+
+/* Operators */
+%token TOK_LEX_ERROR TOK_PAT_STAR TOK_PAT_OR TOK_PAT_NOT
+%token TOK_PLUS TOK_MINUS TOK_UMINUS TOK_MULT TOK_DIV TOK_MOD
+%token TOK_BITAND TOK_BITOR TOK_BITNOT TOK_BITXOR TOK_SHL TOK_SHR
+%token TOK_GT TOK_LT TOK_GE TOK_LE TOK_EQ  TOK_NE TOK_AND TOK_OR TOK_NOT
+%token TOK_COMMA TOK_ASSIGN TOK_SEMICOLON TOK_COLON TOK_ARROW
+%token TOK_LBRACE TOK_RBRACE TOK_LPAREN TOK_RPAREN TOK_DOT TOK_LBRACK TOK_RBRACK
+
+/* Key words */
+
+%token          TOK_IF TOK_ELSE TOK_CLASS TOK_RETURN TOK_EVENT TOK_ANY TOK_PRINT
+%token          TOK_ULONGNUM TOK_UINTNUM TOK_DOUBLENUM
+%token          TOK_VOID TOK_STRING TOK_LONG
+%token          TOK_INT TOK_UNSIGNED TOK_BOOL TOK_BYTE TOK_DOUBLE TOK_SHORT
+%token<cVal>    TOK_STRCONST TOK_TRUE TOK_FALSE TOK_IDENT
+
+/*********************   Precedence and Associativity    ********************/
+
+%right          TOK_ELSE "then"
+%right		TOK_SEMICOLON "reduce"
+%nonassoc       TOK_ASSIGN
+%left           TOK_PAT_OR
+%left           TOK_COLON
+%left           TOK_PAT_STAR
+%right          TOK_PAT_NOT
+%left           TOK_OR
+%left           TOK_AND
+%right          TOK_NOT
+%nonassoc       TOK_EQ TOK_NE TOK_GT TOK_LT TOK_GE TOK_LE
+%left           TOK_BITOR TOK_BITXOR
+%left           TOK_BITAND
+%right          TOK_BITNOT
+%left           TOK_SHL TOK_SHR
+%left           TOK_PLUS TOK_MINUS
+%left           TOK_MULT TOK_DIV TOK_MOD
+%right          TOK_UMINUS
+/*%left         where is left brac*/
+%right          TOK_LPAREN
+%left 		TOK_RPAREN
+%left           TOK_DOT
+/**************************************************************************/
+
+%start specification
+%%
+
+specification		: ifc_decl_star rule_star { prt("Spec"); }
+			| /*empty*/ { errMsg("Must contain at least one rule"); prt("Spec"); }
+;
+
+ifc_decl_star		: /* empty */ {}
+			| ifc_decl_star ifc_decl {}
+			| ifc_decl_star error TOK_SEMICOLON { errMsg("Syntax error, expecting a declaration"); }
+;
+
+ifc_decl		: class_decl TOK_SEMICOLON { prt("ClassDecl"); }
+			| function_decl {}
+ 			| event_decl {}
+			| variable_decl {}
+			| TOK_SEMICOLON {}
+;
+
+
+integer_literal_decl	: TOK_UINTNUM
+;
+
+double_literal_decl	: TOK_DOUBLENUM
+;
+
+bool_literal_decl	: TOK_TRUE
+			| TOK_FALSE
+;
+
+long_literal_decl	: TOK_ULONGNUM
+;
+
+literal_decl 		: integer_literal_decl {}
+			| TOK_STRCONST {}
+			| double_literal_decl {}
+			| bool_literal_decl {}
+			| long_literal_decl {}
+;
+
+literal_prt		: literal_decl { prt("Literal"); }
+;
+
+assignment_decl		: ref_exp TOK_ASSIGN exp	{ prt("Assignment"); }
+;
+
+exp			: literal_prt		
+			| ref_exp
+			| assignment_decl
+			| function_invocation
+			| exp TOK_PLUS exp				{ prt("Expr + Expr"); }
+        		| exp TOK_MINUS exp    				{ prt("Expr - Expr");  }
+        		| exp TOK_MULT exp    				{ prt("Expr * Expr"); }
+        		| exp TOK_DIV exp     				{ prt("Expr / Expr"); }
+			| exp TOK_AND exp				{ prt("Expr && Expr"); }
+			| exp TOK_BITAND exp				{ prt("Expr & Expr"); }
+			| exp TOK_BITOR exp				{ prt("Expr | Expr"); }
+			| exp TOK_GT exp				{ prt("Expr > Expr"); }
+			| exp TOK_GE exp				{ prt("Expr >= Expr"); }
+			| exp TOK_LT exp				{ prt("Expr < Expr"); }
+			| exp TOK_LE exp				{ prt("Expr <= Expr"); }
+			| exp TOK_OR exp				{ prt("Expr || Expr"); }
+			| exp TOK_SHL exp				{ prt("Expr << Expr"); }
+			| exp TOK_SHR exp				{ prt("Expr >> Expr"); }
+        		| exp TOK_BITXOR exp    			{ prt("Expr ^ Expr"); }
+        		| exp TOK_MOD exp  	  			{ prt("Expr % Expr"); }
+        		| exp TOK_EQ exp    				{ prt("Expr == Expr"); }
+        		| exp TOK_NE exp    				{ prt("Expr != Expr"); }
+        		| TOK_BITNOT exp        			{ prt("~Expr"); }
+        		| TOK_MINUS exp	        			{ prt("-Expr"); }
+        		| TOK_NOT exp        				{ prt("!Expr"); }
+        		| TOK_LPAREN exp TOK_RPAREN			{ prt("(Expr)"); }
+         
+;
+
+
+rule				: event_pattern TOK_ARROW statement_decl       { prt("Rule"); }
+;
+
+rule_star			: rule_event
+;
+
+rule_event			: rule
+				| rule_star rule
+;
+event_pattern			: primitive_pattern {}				
+				| event_pattern TOK_PAT_STAR 			{ prt("EventPat **"); }
+				| TOK_NOT event_pattern				{ prt("!EventPat"); }
+				| event_pattern TOK_PAT_OR event_pattern 	{ prt("EventPat \\/ EventPat"); }
+				| event_pattern TOK_COLON event_pattern 	{ prt("EventPat : EventPat"); }
+				| TOK_LPAREN event_pattern TOK_RPAREN		{ prt("(EventPat)"); }
+;
+
+primitive_pattern		: pattern_type					{ prt("PrimitivePat"); }
+				| pattern_type TOK_BITOR exp			{ prt("PrimitivePatWithCond"); }
+
+;
+
+pattern_type				: normal_event {}
+					| any_event {}
+;
+
+any_event			: TOK_ANY{ prt("anyEvent"); }
+;
+
+event_decl			: TOK_EVENT TOK_IDENT formal_param_list_decl 							{ prt("EventDecl"); }
+;
+
+normal_event 			: TOK_IDENT TOK_LPAREN variable_param_list_star TOK_RPAREN			{ prt("NormalEvent"); }
+
+;
+
+/*Statements*/
+statement_decl			: TOK_SEMICOLON
+				| only_if_without_else %prec "then"			{ prt("IfThenStmt"); }
+				| only_if_without_else TOK_ELSE statement_decl		{ prt("IfThenElseStmt"); }
+				| function_invocation TOK_SEMICOLON			{ prt("FunctionInvocationStmt"); }
+				| assignment_decl TOK_SEMICOLON				{ prt("AssignStmt"); }
+				| TOK_RETURN exp TOK_SEMICOLON 				{ prt("ReturnStmt");}
+				| compound_statement_star
+				| error TOK_SEMICOLON					{errMsg("Syntax error while parsing a statement");}
+;
+
+statement_decl_list		: statement_decl
+				| statement_decl_list statement_decl
+;
+
+function_invocation		: TOK_IDENT function_invocation_list	{ prt("FunctionInvocation"); }
+;
+
+inside_function			: exp
+				| inside_function TOK_COMMA exp
+;
+
+function_list			: /*empty*/
+				| inside_function
+;
+
+function_invocation_list	: TOK_LPAREN function_list TOK_RPAREN
+;
+
+/* Function body */
+
+
+
+function_body_decl		: variable_decl_list statement_decl_list
+				| statement_decl_list
+;
+
+function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{ prt("FunctionBody"); }
+;
+
+/* If and Compund statements */
+
+only_if_without_else		: TOK_IF exp statement_decl
+;
+
+compound_statement_decl		: TOK_LBRACE statement_decl_list TOK_RBRACE { prt("CompoundStmt"); }
+;
+
+compound_statement_star		: compound_statement_decl	%prec "reduce"
+				| compound_statement_decl TOK_SEMICOLON
+;
+
+ref_exp				: TOK_IDENT					{ prt("RefExpr"); }
+;
+
+/* Variable parameter list */
+
+variable_param_list_star	: /*empty*/
+				| variable_param_list
+;
+
+variable_param_list		: variable_param_decl {}
+				| variable_param_list TOK_COMMA variable_param_decl {}
+;
+
+variable_param_decl		: TOK_IDENT{ prt("EventFormalParam"); }
+;
+
+
+variable_name		: TOK_IDENT								{ prt("VariableDecl"); }
+			| TOK_IDENT TOK_ASSIGN exp						{ prt("VariableDeclWithInit"); }
+;
+
+variable_name_decl	: variable_name
+			| variable_name_decl TOK_COMMA variable_name
+;
+
+variable_decl		: type_prt variable_name_decl TOK_SEMICOLON	 			
+;
+
+variable_decl_list	: variable_decl
+			| variable_decl_list variable_decl
+
+;
+
+
+/* Class and base type */
+
+class_decl		: TOK_CLASS TOK_IDENT {}
+			| TOK_CLASS error	{ errMsg("Syntax error in class declaration: expecting class name"); }
+;
+
+type_prt		: type_decl { prt("Type"); }
+;
+
+base_type		: TOK_INT {}
+			| TOK_BOOL {}
+			| TOK_BYTE {}
+			| TOK_DOUBLE {}
+			| TOK_SHORT {}
+			| TOK_VOID {}
+			| TOK_LONG {}
+;
+
+type_decl		: base_type		
+			| TOK_STRING {}
+			| TOK_UNSIGNED base_type {}
+			| TOK_IDENT
+;
+
+param_list_star		: /* empty */
+			| param_list	{prt("FormalParamList");}
+;
+
+param_list			: param_decl {} 
+				| param_list TOK_COMMA param_decl { }
+;
+
+param_decl			: type_prt TOK_IDENT{ prt("FormalParam");}
+				| type_prt error { errMsg("Syntax error in formal parameter declaration"); }
+;
+
+formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN
+				
+;
+
+function_decl_only		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
+				| type_prt error   {errMsg("Expecting a function declaration -- may be a missing function name");}
+;
+function_decl			: function_decl_only
+				| function_decl_only function_body_invoc
+;
+
+%%
+
+
