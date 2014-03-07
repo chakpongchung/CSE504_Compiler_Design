@@ -69,14 +69,16 @@ void prt(string s)
 
 /******************************** Type Info ********************************/
 
-%type <cVal> TOK_IDENT TOK_PRINT 
+%type <cVal> TOK_IDENT TOK_PRINT variable_name variable_name_decl
 %type <classEntry> class_decl
 %type <typeVal> type_decl base_type 
+%type <variableEntry> variable_decl
+%type <uVal> TOK_UINTNUM 
+%type <dVal> TOK_DOUBLENUM 
 
 /* Uncomment types below as you start adding rules.
    They are commented right now to prevent compile errors.
 %type <functionEntry> function_header function_decl
-%type <variableEntry> variable_decl formal_param variable_decl1
 %type <typeList> formal_param_list formal_param_plus 
 %type <eventEntry> event_decl_hdr event_decl
 %type <patVal> event_pattern rule_body1
@@ -86,19 +88,14 @@ void prt(string s)
 %type <refexpVal> ref_expr
 %type <ruleNode> rule
 %type <strVector> id_list id_plus
-
-%type <cVal> TOK_IDENT TOK_PRINT 
 %type <funIval> ev_or_fun
-%type <uVal> TOK_UINTNUM 
-%type <dVal> TOK_DOUBLENUM 
-%type <cVal> TOK_STRCONST
-
 %type <valVal> literal
-
 %type <stmtList> stmt_plus
 %type <stmtVal> stmt simple_stmt
 %type <compoundStmtVal> compoundStmt fun_rest
 %type <ifVal>  if_then_else_stmt 
+
+%type <cVal> TOK_STRCONST
 */
 
 /*********************   Precedence and Associativity    ********************/
@@ -144,6 +141,7 @@ ifc_decl_star		: /* empty */ {}
 ;
 
 ifc_decl		: class_decl TOK_SEMICOLON  {}
+			| variable_decl {}
 			| TOK_SEMICOLON {}
 ;
 
@@ -165,7 +163,7 @@ base_type		: TOK_INT  { $$ = new Type(Type::TypeTag::INT);}
 			| TOK_VOID { $$ = new Type(Type::TypeTag::VOID); }
 			| TOK_STRING { $$ = new Type(Type::TypeTag::STRING); }
 			| TOK_UNSIGNED TOK_INT{ $$ = new Type(Type::TypeTag::UINT); }
-			| TOK_IDENT { $$ = new Type(Type::TypeTag::CLASS}
+			| TOK_IDENT { $$ = new Type(Type::TypeTag::CLASS);}
 ;
 
 type_decl		: base_type {$$ = $1;} 		
@@ -322,19 +320,32 @@ variable_param_list_star	: /*empty*/
 				| variable_param_list
 ;
 
-variable_param_list		: TOK_IDENT  { $$ = $1; }
+variable_param_list		: TOK_IDENT  { }
 				| variable_param_list TOK_COMMA TOK_IDENT {}
 ;
 
-variable_name			: TOK_IDENT				{ }
+variable_name			: TOK_IDENT				{ $$ = $1; }
 				| TOK_IDENT TOK_ASSIGN exp		{  }
 ;
 
-variable_name_decl	: variable_name 
+// For variables 
+variable_name_decl	: variable_name					{ $$ = $1; } 
 			| variable_name_decl TOK_COMMA variable_name	
 ;
 
-variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{ $$ = $1; }		
+variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{ 
+										 SymTabEntry *ste = stm.currentScope();
+										 VariableEntry::VarKind vk = VariableEntry::VarKind::LOCAL_VAR;
+
+										 if (ste->kind() == SymTabEntry::Kind::GLOBAL_KIND)
+										    {
+									    	
+											vk = VariableEntry::VarKind::GLOBAL_VAR;
+										    }
+
+											$$ = new VariableEntry($2,vk,$1);
+											stm.insert($$);
+										}
 ;
 
 variable_decl_list	: variable_decl 
@@ -352,7 +363,6 @@ param_list			: param_decl {}
 ;
 
 param_decl			: type_decl TOK_IDENT { 
-							$$ = new VariableEntry($2);
 						      }
 ;
 
