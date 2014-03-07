@@ -76,12 +76,12 @@ void prt(string s)
 %type <variableEntry> variable_decl
 %type <uVal> TOK_UINTNUM 
 %type <dVal> TOK_DOUBLENUM 
+%type <eventEntry> event_decl
 
 /* Uncomment types below as you start adding rules.
    They are commented right now to prevent compile errors.
 %type <functionEntry> function_header function_decl
 %type <typeList> formal_param_list formal_param_plus 
-%type <eventEntry> event_decl_hdr event_decl
 %type <patVal> event_pattern rule_body1
 %type <primPatVal> event primitive_pat 
 %type <exprList> expr_list expr_plus
@@ -143,6 +143,7 @@ ifc_decl_star		: /* empty */ {}
 
 ifc_decl		: class_decl TOK_SEMICOLON  {}
 			| variable_decl {}
+			| event_decl {}
 			| TOK_SEMICOLON {}
 ;
 
@@ -253,7 +254,10 @@ pattern_type				: normal_event {}
 any_event			: TOK_ANY{ prt("anyEvent"); }
 ;
 
-event_decl			: TOK_EVENT TOK_IDENT formal_param_list_decl 							{ prt("EventDecl"); }
+event_decl			: TOK_EVENT TOK_IDENT formal_param_list_decl 		{   $$ = new EventEntry($2);
+											    stm.insert($$);
+											    stm.enterScope($$);
+											    }
 ;
 
 normal_event 			: TOK_IDENT TOK_LPAREN variable_param_list_star TOK_RPAREN			{ prt("NormalEvent"); }

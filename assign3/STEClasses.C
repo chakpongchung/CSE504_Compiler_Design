@@ -9,12 +9,12 @@ void GlobalEntry::print(ostream& out, int indent) const
 
 void EventEntry::print(ostream& out, int indent) const
 {
-    // Add your code
+    out << "Event " << name();
 }
 
 void ClassEntry::print(ostream& out, int indent) const
 {
-    out<<"Class "<<name();
+    out <<  "Class " << name();
 }
 
 void VariableEntry::print(ostream& out, int indent) const
