@@ -69,7 +69,8 @@ void prt(string s)
 
 /******************************** Type Info ********************************/
 
-%type <cVal> TOK_IDENT TOK_PRINT variable_name variable_name_decl
+%type <cVal> TOK_IDENT TOK_PRINT variable_name
+%type <strVector> variable_name_decl
 %type <classEntry> class_decl
 %type <typeVal> type_decl base_type 
 %type <variableEntry> variable_decl
@@ -156,14 +157,14 @@ class_decl		: TOK_CLASS TOK_IDENT {
 
 //Base type
 
-base_type		: TOK_INT  { $$ = new Type(Type::TypeTag::INT);}
-			| TOK_BOOL { $$ = new Type(Type::TypeTag::BOOL); }
-			| TOK_BYTE { $$ = new Type(Type::TypeTag::BYTE); }
-			| TOK_DOUBLE { $$ = new Type(Type::TypeTag::DOUBLE); }
-			| TOK_VOID { $$ = new Type(Type::TypeTag::VOID); }
-			| TOK_STRING { $$ = new Type(Type::TypeTag::STRING); }
-			| TOK_UNSIGNED TOK_INT{ $$ = new Type(Type::TypeTag::UINT); }
-			| TOK_IDENT { $$ = new Type(Type::TypeTag::CLASS);}
+base_type		: TOK_INT		 { $$ = new Type(Type::TypeTag::INT);}
+			| TOK_BOOL		 { $$ = new Type(Type::TypeTag::BOOL); }
+			| TOK_BYTE		{ $$ = new Type(Type::TypeTag::BYTE); }
+			| TOK_DOUBLE		{ $$ = new Type(Type::TypeTag::DOUBLE); }
+			| TOK_VOID		{ $$ = new Type(Type::TypeTag::VOID); }
+			| TOK_STRING		{ $$ = new Type(Type::TypeTag::STRING); }
+			| TOK_UNSIGNED TOK_INT	    { $$ = new Type(Type::TypeTag::UINT); }
+			| TOK_IDENT		    { $$ = new Type(Type::TypeTag::CLASS);}
 ;
 
 type_decl		: base_type {$$ = $1;} 		
@@ -325,12 +326,15 @@ variable_param_list		: TOK_IDENT  { }
 ;
 
 variable_name			: TOK_IDENT				{ $$ = $1; }
-				| TOK_IDENT TOK_ASSIGN exp		{  }
+			//	| TOK_IDENT TOK_ASSIGN exp		{  }
 ;
 
 // For variables 
-variable_name_decl	: variable_name					{ $$ = $1; } 
-			| variable_name_decl TOK_COMMA variable_name	
+variable_name_decl	: variable_name					{	$$ = new vector<string>();
+										$$->push_back($1); }
+
+			| variable_name_decl TOK_COMMA variable_name	{	$$->push_back($3); }
+
 ;
 
 variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{ 
@@ -342,9 +346,9 @@ variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{
 									    	
 											vk = VariableEntry::VarKind::GLOBAL_VAR;
 										    }
-
-											$$ = new VariableEntry($2,vk,$1);
-											stm.insert($$);
+										    for(vector<string>::iterator it = $2->begin(); it != $2->end(); ++it) {
+											stm.insert(new VariableEntry(*it, vk, $1));
+										    }
 										}
 ;
 
