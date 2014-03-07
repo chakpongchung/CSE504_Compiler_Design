@@ -71,6 +71,7 @@ void prt(string s)
 
 %type <cVal> TOK_IDENT TOK_PRINT 
 %type <classEntry> class_decl
+%type <typeVal> type_decl base_type 
 
 /* Uncomment types below as you start adding rules.
    They are commented right now to prevent compile errors.
@@ -80,7 +81,6 @@ void prt(string s)
 %type <eventEntry> event_decl_hdr event_decl
 %type <patVal> event_pattern rule_body1
 %type <primPatVal> event primitive_pat 
-%type <typeVal> type baseType 
 %type <exprList> expr_list expr_plus
 %type <exprVal> expr function_invocation asg_stmt
 %type <refexpVal> ref_expr
@@ -147,7 +147,6 @@ ifc_decl		: class_decl TOK_SEMICOLON  {}
 			| TOK_SEMICOLON {}
 ;
 
-
 //Class Declaration
 class_decl		: TOK_CLASS TOK_IDENT {
 						    $$ = new ClassEntry($2);
@@ -156,6 +155,23 @@ class_decl		: TOK_CLASS TOK_IDENT {
 ;
 
 
+
+//Base type
+
+base_type		: TOK_INT  { $$ = new Type(Type::TypeTag::INT);}
+			| TOK_BOOL { $$ = new Type(Type::TypeTag::BOOL); }
+			| TOK_BYTE { $$ = new Type(Type::TypeTag::BYTE); }
+			| TOK_DOUBLE { $$ = new Type(Type::TypeTag::DOUBLE); }
+			| TOK_VOID { $$ = new Type(Type::TypeTag::VOID); }
+			| TOK_STRING { $$ = new Type(Type::TypeTag::STRING); }
+			| TOK_UNSIGNED TOK_INT{ $$ = new Type(Type::TypeTag::UINT); }
+			| TOK_IDENT { $$ = new Type(Type::TypeTag::CLASS}
+;
+
+type_decl		: base_type {$$ = $1;} 		
+;
+
+/* Literals */
 integer_literal_decl	: TOK_UINTNUM
 ;
 
@@ -306,49 +322,26 @@ variable_param_list_star	: /*empty*/
 				| variable_param_list
 ;
 
-variable_param_list		: variable_param_decl {}
-				| variable_param_list TOK_COMMA variable_param_decl {}
+variable_param_list		: TOK_IDENT  { $$ = $1; }
+				| variable_param_list TOK_COMMA TOK_IDENT {}
 ;
 
-variable_param_decl		: TOK_IDENT{ prt("EventFormalParam"); }
+variable_name			: TOK_IDENT				{ }
+				| TOK_IDENT TOK_ASSIGN exp		{  }
 ;
 
-
-variable_name		: TOK_IDENT								{ prt("VariableDecl"); }
-			| TOK_IDENT TOK_ASSIGN exp						{ prt("VariableDeclWithInit"); }
+variable_name_decl	: variable_name 
+			| variable_name_decl TOK_COMMA variable_name	
 ;
 
-variable_name_decl	: variable_name
-			| variable_name_decl TOK_COMMA variable_name
+variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{ $$ = $1; }		
 ;
 
-variable_decl		: type_prt variable_name_decl TOK_SEMICOLON	 			
-;
-
-variable_decl_list	: variable_decl
+variable_decl_list	: variable_decl 
 			| variable_decl_list variable_decl
 
 ;
 
-
-/* Base type */
-type_prt		: type_decl { prt("Type"); }
-;
-
-base_type		: TOK_INT {}
-			| TOK_BOOL {}
-			| TOK_BYTE {}
-			| TOK_DOUBLE {}
-			| //TOK_SHORT {}
-			| TOK_VOID {}
-			| //TOK_LONG {}
-;
-
-type_decl		: base_type		
-			| TOK_STRING {}
-			| TOK_UNSIGNED base_type {}
-			| TOK_IDENT
-;
 
 param_list_star		: /* empty */
 			| param_list	{prt("FormalParamList");}
@@ -358,16 +351,17 @@ param_list			: param_decl {}
 				| param_list TOK_COMMA param_decl { }
 ;
 
-param_decl			: type_prt TOK_IDENT{ prt("FormalParam");}
-				| type_prt error { errMsg("Syntax error in formal parameter declaration"); }
+param_decl			: type_decl TOK_IDENT { 
+							$$ = new VariableEntry($2);
+						      }
 ;
 
 formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN
 				
 ;
 
-function_decl_only		: type_prt TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
-				| type_prt error   {errMsg("Expecting a function declaration -- may be a missing function name");}
+function_decl_only		: type_decl TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
+				| type_decl error   {errMsg("Expecting a function declaration -- may be a missing function name");}
 ;
 function_decl			: function_decl_only
 				| function_decl_only function_body_invoc
