@@ -69,10 +69,10 @@ SymTab::printST(ostream& os, int indent, char leftdelim, char rightdelim,
 
   if (leftdelim != '\0') {
 	os << leftdelim;
-	if ((n_printed > 0) && (linebreak))
-	  prtln(os, indent+STEP_INDENT);
   }
 
+  if ((n_printed > 0) && (linebreak))
+	  prtln(os, indent+STEP_INDENT);
   for (i=0, it=begin();
 	   (it != end()) && (i < last); i++, ++it)  {
 	SymTabEntry *ste = (SymTabEntry *)(*it);

@@ -308,11 +308,11 @@ function_invocation_list	: TOK_LPAREN function_list TOK_RPAREN
 
 
 
-function_body_decl		: variable_decl_list statement_decl_list
+function_body_decl		: variable_decl_list statement_decl_list    {}
 				| statement_decl_list
 ;
 
-function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{ prt("FunctionBody"); }
+function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{  }
 ;
 
 /* If and Compund statements */
@@ -398,7 +398,7 @@ function_decl_only		: function_header formal_param_list_decl		    {}
 ;
 
 function_decl			: function_decl_only TOK_SEMICOLON		{ stm.leaveScope(); }
-				| function_decl_only function_body_invoc
+				| function_decl_only function_body_invoc	{ stm.leaveScope(); }
 ;
 
 

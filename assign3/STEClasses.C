@@ -27,8 +27,47 @@ void VariableEntry::print(ostream& out, int indent) const
 
 void FunctionEntry::print(ostream& out, int indent) const
 {
+
     out << type()->fullName() << " " << name();
     out << "(";
-    printST(out, indent,'\0', '\0', false);
+
+
+    int i = 0;
+    const SymTab *st = symTab();
+    if(st!=NULL)
+    {
+
+        SymTab::const_iterator it = st->begin();
+        for (i=0; (it != st->end()); i++, ++it)
+        {
+            SymTabEntry *ste = (SymTabEntry *)(*it);
+            if(ste->kind() == SymTabEntry::Kind::VARIABLE_KIND)
+            {
+                VariableEntry *ve = (VariableEntry *)ste;
+                if(ve->varKind() != VariableEntry::VarKind::PARAM_VAR)
+                {
+                    break;
+                }
+            }
+        }
+    }
+    if(i!=0)
+    {
+        printST(out, indent,'\0', '\0', false, 0, i);
+    }
     out << ")";
+
+    if(st != NULL && i < st->size())
+    {
+        out << " {";
+        printST(out, indent,'\0', ';',true, i, st->size());
+        out << "}";
+    }
+
 }
+
+
+
+
+
+
