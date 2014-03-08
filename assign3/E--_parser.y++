@@ -73,15 +73,14 @@ void prt(string s)
 %type <strVector> variable_name_decl
 %type <classEntry> class_decl
 %type <typeVal> type_decl base_type 
-%type <variableEntry> variable_decl
+%type <variableEntry> variable_decl param_decl
 %type <uVal> TOK_UINTNUM 
 %type <dVal> TOK_DOUBLENUM 
-%type <eventEntry> event_decl
+%type <eventEntry> event_decl_hdr param_list_star
 
 /* Uncomment types below as you start adding rules.
-   They are commented right now to prevent compile errors.
+They are commented right now to prevent compile errors.
 %type <functionEntry> function_header function_decl
-%type <typeList> formal_param_list formal_param_plus 
 %type <patVal> event_pattern rule_body1
 %type <primPatVal> event primitive_pat 
 %type <exprList> expr_list expr_plus
@@ -96,6 +95,7 @@ void prt(string s)
 %type <compoundStmtVal> compoundStmt fun_rest
 %type <ifVal>  if_then_else_stmt 
 
+%type <typeList> formal_param_list 
 %type <cVal> TOK_STRCONST
 */
 
@@ -165,7 +165,14 @@ base_type		: TOK_INT		 { $$ = new Type(Type::TypeTag::INT);}
 			| TOK_VOID		{ $$ = new Type(Type::TypeTag::VOID); }
 			| TOK_STRING		{ $$ = new Type(Type::TypeTag::STRING); }
 			| TOK_UNSIGNED TOK_INT	    { $$ = new Type(Type::TypeTag::UINT); }
-			| TOK_IDENT		    { $$ = new Type(Type::TypeTag::CLASS);}
+			| TOK_IDENT		    { 
+							SymTabEntry *ste = stm.lookUp($1);
+							if(ste == nullptr) {
+							    $$ = new Type(Type::TypeTag::UNKNOWN);
+							} else {
+							    $$ = new Type(stm.lookUp($1), Type::TypeTag::CLASS);
+							}
+						    }
 ;
 
 type_decl		: base_type {$$ = $1;} 		
@@ -254,11 +261,14 @@ pattern_type				: normal_event {}
 any_event			: TOK_ANY{ prt("anyEvent"); }
 ;
 
-event_decl			: TOK_EVENT TOK_IDENT formal_param_list_decl 		{   $$ = new EventEntry($2);
+
+event_decl_hdr			: TOK_EVENT TOK_IDENT					{   $$ = new EventEntry($2);
 											    stm.insert($$);
 											    stm.enterScope($$);
 											    }
 ;
+
+event_decl			: event_decl_hdr formal_param_list_decl			{ }
 
 normal_event 			: TOK_IDENT TOK_LPAREN variable_param_list_star TOK_RPAREN			{ prt("NormalEvent"); }
 
@@ -362,24 +372,27 @@ variable_decl_list	: variable_decl
 ;
 
 
-param_list_star		: /* empty */
-			| param_list	{prt("FormalParamList");}
+param_list_star		: /* empty */	{ }
+			| param_list	{ }
 ;
 
-param_list			: param_decl {} 
-				| param_list TOK_COMMA param_decl { }
+param_list			: param_decl			{
+								} 
+
+				| param_list TOK_COMMA param_decl	 { }
 ;
 
 param_decl			: type_decl TOK_IDENT { 
+							    stm.insert(new VariableEntry($2, VariableEntry::VarKind::PARAM_VAR, $1));
 						      }
 ;
 
-formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN
+formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN		    { stm.leaveScope(); }
 				
 ;
 
-function_decl_only		: type_decl TOK_IDENT formal_param_list_decl { prt("FunctionDecl"); }
-				| type_decl error   {errMsg("Expecting a function declaration -- may be a missing function name");}
+function_decl_only		: type_decl TOK_IDENT formal_param_list_decl		    { prt("FunctionDecl"); }
+				| type_decl error					    { errMsg("Expecting a function declaration -- may be a missing function name");}
 ;
 function_decl			: function_decl_only
 				| function_decl_only function_body_invoc

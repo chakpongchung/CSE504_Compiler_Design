@@ -9,8 +9,10 @@ void GlobalEntry::print(ostream& out, int indent) const
 
 void EventEntry::print(ostream& out, int indent) const
 {
-    out << "Event " << name() << "(" << ")";
+    out << "Event " << name();
+    out << "(";
     printST(out, indent,'\0', '\0', false);
+    out << ")";
 }
 
 void ClassEntry::print(ostream& out, int indent) const
