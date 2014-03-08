@@ -21,6 +21,40 @@ ExprNode::ExprNode(ExprNodeType et, const Value* val, int line, int column,
 }
 
 
+RefExprNode::RefExprNode(string ext, const SymTabEntry* ste,int line, int column, string file):
+    ExprNode(ExprNode::ExprNodeType::REF_EXPR_NODE, NULL, line, column, file)
+{
+	ext_ = ext;
+	sym_ = ste;
+}
+
+RefExprNode::RefExprNode(const RefExprNode& ref):
+    ExprNode(ref)
+{
+    ext_ = ref.ext();
+    sym_ = ref.symTabEntry();
+}
+
+void ValueNode::print(ostream& out, int indent) const
+{
+        out << value() ;
+}
+
+void RefExprNode::print(ostream& out, int indent) const
+{
+        out << value() ;
+}
+
+/*
+void ReturnStmtNode::print(ostream& out, int indent) const
+{
+        
+	out <<"return ";
+	RefExprNode::print(out, indent);
+
+}
+*/
+
 ExprNode::ExprNode(const ExprNode& e) : AstNode(e)
 {
 	// Add your code here
