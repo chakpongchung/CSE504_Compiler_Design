@@ -78,6 +78,9 @@ void prt(string s)
 %type <dVal> TOK_DOUBLENUM 
 %type <eventEntry> event_decl_hdr param_list_star
 %type <functionEntry> function_header
+%type <refexpVal> ref_exp
+%type <exprVal> exp
+%type <valVal> integer_literal_decl double_literal_decl bool_literal_decl literal_decl literal_prt
 
 /* Uncomment types below as you start adding rules.
 They are commented right now to prevent compile errors.
@@ -85,11 +88,9 @@ They are commented right now to prevent compile errors.
 %type <primPatVal> event primitive_pat 
 %type <exprList> expr_list expr_plus
 %type <exprVal> expr function_invocation asg_stmt
-%type <refexpVal> ref_expr
 %type <ruleNode> rule
 %type <strVector> id_list id_plus
 %type <funIval> ev_or_fun
-%type <valVal> literal
 %type <stmtList> stmt_plus
 %type <stmtVal> stmt simple_stmt
 %type <compoundStmtVal> compoundStmt fun_rest
@@ -180,55 +181,55 @@ type_decl		: base_type {$$ = $1;}
 ;
 
 /* Literals */
-integer_literal_decl	: TOK_UINTNUM
+integer_literal_decl	: TOK_UINTNUM			{ $$ = new ValueNode($1); }
 ;
 
-double_literal_decl	: TOK_DOUBLENUM
+double_literal_decl	: TOK_DOUBLENUM			{ $$ = new ValueNode($1); }
 ;
 
-bool_literal_decl	: TOK_TRUE
-			| TOK_FALSE
+bool_literal_decl	: TOK_TRUE			{ $$ = new ValueNode(true); }
+			| TOK_FALSE			{ $$ = new ValueNode(false); }
 ;
 
 
-literal_decl 		: integer_literal_decl {}
-			| TOK_STRCONST {}
-			| double_literal_decl {}
-			| bool_literal_decl {}
+literal_decl 		: integer_literal_decl {}	    { $$ = $1; }
+			| TOK_STRCONST {}		    { $$ = new ValueNode($1); }
+			| double_literal_decl {}	    { $$ = $1; }
+			| bool_literal_decl {}		    { $$ = $1; }
 ;
 
-literal_prt		: literal_decl { prt("Literal"); }
+literal_prt		: literal_decl			{ $$ = $1; }
 ;
 
 assignment_decl		: ref_exp TOK_ASSIGN exp	{ prt("Assignment"); }
 ;
 
-exp			: literal_prt		
-			| ref_exp
+exp			: literal_prt			{ $$ = $1;}    	
+			| ref_exp			{ $$ = $1; }
 			| assignment_decl
 			| function_invocation
-			| exp TOK_PLUS exp				{ prt("Expr + Expr"); }
-        		| exp TOK_MINUS exp    				{ prt("Expr - Expr");  }
-        		| exp TOK_MULT exp    				{ prt("Expr * Expr"); }
-        		| exp TOK_DIV exp     				{ prt("Expr / Expr"); }
-			| exp TOK_AND exp				{ prt("Expr && Expr"); }
-			| exp TOK_BITAND exp				{ prt("Expr & Expr"); }
-			| exp TOK_BITOR exp				{ prt("Expr | Expr"); }
-			| exp TOK_GT exp				{ prt("Expr > Expr"); }
-			| exp TOK_GE exp				{ prt("Expr >= Expr"); }
-			| exp TOK_LT exp				{ prt("Expr < Expr"); }
-			| exp TOK_LE exp				{ prt("Expr <= Expr"); }
-			| exp TOK_OR exp				{ prt("Expr || Expr"); }
-			| exp TOK_SHL exp				{ prt("Expr << Expr"); }
-			| exp TOK_SHR exp				{ prt("Expr >> Expr"); }
-        		| exp TOK_BITXOR exp    			{ prt("Expr ^ Expr"); }
-        		| exp TOK_MOD exp  	  			{ prt("Expr \% Expr"); }
-        		| exp TOK_EQ exp    				{ prt("Expr == Expr"); }
-        		| exp TOK_NE exp    				{ prt("Expr != Expr"); }
-        		| TOK_BITNOT exp        			{ prt("~Expr"); }
-        		| TOK_MINUS exp	        			{ prt("-Expr"); }
-        		| TOK_NOT exp        				{ prt("!Expr"); }
-        		| TOK_LPAREN exp TOK_RPAREN			{ prt("(Expr)"); }
+			| exp TOK_PLUS exp		{ $$ = new OpNode(OpNode::OpCode::PLUS, $1, $3);}
+        		| exp TOK_MINUS exp 		{ $$ = new OpNode(OpNode::OpCode::MINUS, $1, $3);}	
+        		| exp TOK_MULT exp    		{ $$ = new OpNode(OpNode::OpCode::MULT, $1, $3);}		
+        		| exp TOK_DIV exp     		{ $$ = new OpNode(OpNode::OpCode::DIV, $1, $3);}	 
+			| exp TOK_AND exp		{ $$ = new OpNode(OpNode::OpCode::AND, $1, $3);}		
+			| exp TOK_BITAND exp		{ $$ = new OpNode(OpNode::OpCode::BITAND, $1, $3);}		
+			| exp TOK_BITOR exp		{ $$ = new OpNode(OpNode::OpCode::BITOR, $1, $3);}	
+			| exp TOK_GT exp		{ $$ = new OpNode(OpNode::OpCode::GT, $1, $3);}		
+			| exp TOK_GE exp		{ $$ = new OpNode(OpNode::OpCode::GE, $1, $3);}	 
+			| exp TOK_LT exp		{ $$ = new OpNode(OpNode::OpCode::LT, $1, $3);}		
+			| exp TOK_LE exp	        { $$ = new OpNode(OpNode::OpCode::LE, $1, $3);}
+			| exp TOK_OR exp		{ $$ = new OpNode(OpNode::OpCode::OR, $1, $3);}		
+			| exp TOK_SHL exp		{ $$ = new OpNode(OpNode::OpCode::SHL, $1, $3);}		
+			| exp TOK_SHR exp		{ $$ = new OpNode(OpNode::OpCode::SHR, $1, $3);}	
+			| exp TOK_BITXOR exp    	{ $$ = new OpNode(OpNode::OpCode::BITXOR, $1, $3);}	
+        		| exp TOK_MOD exp  	  	{ $$ = new OpNode(OpNode::OpCode::MOD, $1, $3);}		
+        		| exp TOK_EQ exp    		{ $$ = new OpNode(OpNode::OpCode::EQ, $1, $3);}		
+        		| exp TOK_NE exp    		{ $$ = new OpNode(OpNode::OpCode::NE, $1, $3);}		
+        		| TOK_BITNOT exp        	{ $$ = new OpNode(OpNode::OpCode::BITNOT, $1, $3);}		
+        		| TOK_MINUS exp	        	{ $$ = new OpNode(OpNode::OpCode::UMINUS, $1, $3);}
+        		| TOK_NOT exp        		{ $$ = new OpNode(OpNode::OpCode::NOT, $1, $3);}
+        		| TOK_LPAREN exp TOK_RPAREN	{ }
          
 ;
 
@@ -281,7 +282,7 @@ statement_decl			: TOK_SEMICOLON
 				| only_if_without_else TOK_ELSE statement_decl		{ prt("IfThenElseStmt"); }
 				| function_invocation TOK_SEMICOLON			{ prt("FunctionInvocationStmt"); }
 				| assignment_decl TOK_SEMICOLON				{ prt("AssignStmt"); }
-				| TOK_RETURN exp TOK_SEMICOLON 				{ prt("ReturnStmt");}
+				| TOK_RETURN exp TOK_SEMICOLON 				{ }
 				| compound_statement_star
 				| error TOK_SEMICOLON					{errMsg("Syntax error while parsing a statement");}
 ;
@@ -327,7 +328,7 @@ compound_statement_star		: compound_statement_decl	%prec "reduce"
 				| compound_statement_decl TOK_SEMICOLON
 ;
 
-ref_exp				: TOK_IDENT					{ prt("RefExpr"); }
+ref_exp				: TOK_IDENT			{ $$ = new RefExprNode($1); }
 ;
 
 /* Variable parameter list */
