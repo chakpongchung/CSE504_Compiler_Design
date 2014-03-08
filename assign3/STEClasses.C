@@ -24,3 +24,11 @@ void VariableEntry::print(ostream& out, int indent) const
 {
     out << type()->fullName() << " " << name();
 }
+
+void FunctionEntry::print(ostream& out, int indent) const
+{
+    out << type()->fullName() << " " << name();
+    out << "(";
+    printST(out, indent,'\0', '\0', false);
+    out << ")";
+}

@@ -77,10 +77,10 @@ void prt(string s)
 %type <uVal> TOK_UINTNUM 
 %type <dVal> TOK_DOUBLENUM 
 %type <eventEntry> event_decl_hdr param_list_star
+%type <functionEntry> function_header
 
 /* Uncomment types below as you start adding rules.
 They are commented right now to prevent compile errors.
-%type <functionEntry> function_header function_decl
 %type <patVal> event_pattern rule_body1
 %type <primPatVal> event primitive_pat 
 %type <exprList> expr_list expr_plus
@@ -144,6 +144,7 @@ ifc_decl_star		: /* empty */ {}
 ifc_decl		: class_decl TOK_SEMICOLON  {}
 			| variable_decl {}
 			| event_decl {}
+			| function_decl {}
 			| TOK_SEMICOLON {}
 ;
 
@@ -221,7 +222,7 @@ exp			: literal_prt
 			| exp TOK_SHL exp				{ prt("Expr << Expr"); }
 			| exp TOK_SHR exp				{ prt("Expr >> Expr"); }
         		| exp TOK_BITXOR exp    			{ prt("Expr ^ Expr"); }
-        		| exp TOK_MOD exp  	  			{ prt("Expr % Expr"); }
+        		| exp TOK_MOD exp  	  			{ prt("Expr \% Expr"); }
         		| exp TOK_EQ exp    				{ prt("Expr == Expr"); }
         		| exp TOK_NE exp    				{ prt("Expr != Expr"); }
         		| TOK_BITNOT exp        			{ prt("~Expr"); }
@@ -268,7 +269,7 @@ event_decl_hdr			: TOK_EVENT TOK_IDENT					{   $$ = new EventEntry($2);
 											    }
 ;
 
-event_decl			: event_decl_hdr formal_param_list_decl			{ }
+event_decl			: event_decl_hdr formal_param_list_decl TOK_SEMICOLON			{ stm.leaveScope(); }
 
 normal_event 			: TOK_IDENT TOK_LPAREN variable_param_list_star TOK_RPAREN			{ prt("NormalEvent"); }
 
@@ -387,14 +388,16 @@ param_decl			: type_decl TOK_IDENT {
 						      }
 ;
 
-formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN		    { stm.leaveScope(); }
+formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN		   { }
 				
 ;
 
-function_decl_only		: type_decl TOK_IDENT formal_param_list_decl		    { prt("FunctionDecl"); }
-				| type_decl error					    { errMsg("Expecting a function declaration -- may be a missing function name");}
+function_header			: type_decl TOK_IDENT			{    $$ = new FunctionEntry($2); stm.insert($$); stm.enterScope($$); }
+
+function_decl_only		: function_header formal_param_list_decl		    {}
 ;
-function_decl			: function_decl_only
+
+function_decl			: function_decl_only TOK_SEMICOLON		{ stm.leaveScope(); }
 				| function_decl_only function_body_invoc
 ;
 
