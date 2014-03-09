@@ -90,14 +90,14 @@ void prt(string s)
 %type <compoundStmtVal> compound_statement_star compound_statement_decl
 %type <exprList> inside_function function_list function_invocation_list
 %type <vEntryList> variable_name_decl
-%type <patVal> event_pattern 
+%type <patVal> event_pattern rule 
 %type <primPatVal> any_event normal_event primitive_pattern pattern_type
 %type <strVector> event_param_list event_param_list_star
+%type <ruleNode> rule_decl
 
 /* Uncomment types below as you start adding rules.
 They are commented right now to prevent compile errors.
 %type <exprVal> expr function_invocation asg_stmt
-%type <ruleNode> rule
 %type <funIval> ev_or_fun
 %type <ifVal>  if_then_else_stmt 
 %type <typeList> formal_param_list 
@@ -241,21 +241,33 @@ exp			: literal_prt			{ $$ = $1; }
 ;
 
 
-rule				: event_pattern TOK_ARROW		       { $$ = new RuleBlockEntry();  }
-;
-
-rule_decl			: rule statement_decl				{ }
-;
-
 rule_star			: rule_event					{ }
 ;
 
-rule_event			: rule						{ }
-				| rule_star rule				{ }
+rule_event			: rule_decl					{  }
+				| rule_event rule_decl				{  }
 ;
+
+rule_decl			: rule statement_decl				{  
+										    if((stm.currentScope())->kind() == SymTabEntry::Kind::RULE_KIND)
+										    {	
+											$$ = new RuleNode((BlockEntry *)stm.currentScope(), $1, $2); 
+											stm.leaveScope();
+											((GlobalEntry *)(stm.currentScope()))->addRule($$);
+										    }
+
+										}
+;
+
+rule				: event_pattern TOK_ARROW		        {
+										    stm.enterScope(new RuleBlockEntry());
+										    $$ = $1;
+										}
+;
+
 event_pattern			: primitive_pattern				{ $$ = new PatNode(BasePatNode::PatNodeKind::PRIMITIVE, $1); }				
 				| event_pattern TOK_PAT_STAR 			{ $$ = new PatNode(BasePatNode::PatNodeKind::STAR, $1); }
-				| TOK_NOT event_pattern				{ $$ = new PatNode(BasePatNode::PatNodeKind::NEG, $1);  }
+				| TOK_NOT event_pattern				{ $$ = new PatNode(BasePatNode::PatNodeKind::NEG, $2);  }
 				| event_pattern TOK_PAT_OR event_pattern 	{ $$ = new PatNode(BasePatNode::PatNodeKind::OR, $1, $3); }
 				| event_pattern TOK_COLON event_pattern 	{ $$ = new PatNode(BasePatNode::PatNodeKind::SEQ, $1, $3); }
 				| TOK_LPAREN event_pattern TOK_RPAREN		{ $$ = $2; }
@@ -286,18 +298,32 @@ event_decl_hdr			: TOK_EVENT TOK_IDENT					   {
 
 event_decl			: event_decl_hdr formal_param_list_decl TOK_SEMICOLON			{ stm.leaveScope(); }
 
-normal_event 			: TOK_IDENT TOK_LPAREN event_param_list_star TOK_RPAREN			{   
-													    if(stm.lookUp($1)->kind() == SymTabEntry::Kind::EVENT_KIND)
-														$$ = new PrimitivePatNode((EventEntry *)stm.lookUp($1), $3);
-													}
+normal_event		 	: TOK_IDENT TOK_LPAREN event_param_list_star TOK_RPAREN	    {
+										 
+											    EventEntry *ee = NULL;
+											    const SymTab *st = NULL;
+											    if(stm.lookUp($1)!=NULL && (stm.lookUp($1)->kind() == SymTabEntry::Kind::EVENT_KIND))
+    											    {
+											         ee = (EventEntry *)(stm.lookUp($1));
+											         st = ((SymTabEntry *)ee)->SymTab();
+											         vector<VariableEntry*> *ve = new vector<VariableEntry*>();
+												 vector<string>::const_iterator sit = $3->begin();
+											    for(SymTab::const_iterator it = st->begin(); it != st->end(); ++it, ++sit)
+											    {
+							    	VariableEntry *ve_elem = new VariableEntry(*sit,VariableEntry::VarKind::PARAM_VAR, ((VariableEntry *)(it))->type());
+												ve->push_back(ve_elem);
+											     }
 
+												$$ = new PrimitivePatNode((EventEntry *)stm.lookUp($1), ve);
+											    }
+										    }
 ;
 
 event_param_list_star		: /*empty*/			{ $$ = new vector<string>;}
                                 | event_param_list		{ $$ = $1; }
 ;
 
-event_param_list		: TOK_IDENT					{   $$ = new vector<string>;
+event_param_list		: TOK_IDENT					{   $$ = new vector<string>();
 										    $$->push_back($1);   
 										}
 				| event_param_list TOK_COMMA TOK_IDENT		{   $$->push_back($3);  }
@@ -329,7 +355,7 @@ statement_decl_list		: statement_decl					{
 function_invocation		: TOK_IDENT function_invocation_list			{ $$ = new InvocationNode(stm.lookUp($1), $2); }
 ;
 
-inside_function			: exp							{ $$ = new vector<ExprNode*>; $$->push_back($1);	}
+inside_function			: exp							{ $$ = new vector<ExprNode*>(); $$->push_back($1);	}
 				| inside_function TOK_COMMA exp				{ $$->push_back($3); }
 ;
 
@@ -382,7 +408,7 @@ variable_name			: TOK_IDENT				{ $$ = new VariableEntry($1, VariableEntry::VarKi
 ;
 
 // For variables 
-variable_name_decl	: variable_name					{	$$ = new vector<VariableEntry*>;
+variable_name_decl	: variable_name					{	$$ = new vector<VariableEntry*>();
 										$$->push_back($1); }
 
 			| variable_name_decl TOK_COMMA variable_name	{	$$->push_back($3); }
