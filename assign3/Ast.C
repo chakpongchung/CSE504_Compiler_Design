@@ -30,6 +30,14 @@ RefExprNode::RefExprNode(string ext, const SymTabEntry* ste,int line, int column
 	sym_ = ste;
 }
 
+IfNode::IfNode(ExprNode* cond, StmtNode* thenStmt, StmtNode* elseStmt, int line, int column, string file):
+    StmtNode(StmtNode::StmtNodeKind::IF, line, column , file)
+{
+    cond_ = cond;
+    then_ = thenStmt;
+    else_ = elseStmt;
+}
+
 
 InvocationNode::InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param, int line, int column, string file): ExprNode(ExprNode::ExprNodeType::REF_EXPR_NODE, NULL, line, column, file)
 {
@@ -118,6 +126,25 @@ bool PatNode::hasAnyOrOther() const
 	return true;
     else
 	return false;
+}
+
+void IfNode::print(ostream& os, int indent) const
+{
+    os << "if";
+    if(cond()!=NULL)
+    {	os << "(";
+	cond()->print(os, indent);
+	os << ")";
+    }
+	prtln(os, indent);
+    if(thenStmt()!=NULL)
+	thenStmt()->print(os, indent);
+    if(elseStmt()!=NULL)
+    {
+	os << "else";
+	prtln(os, indent);
+	elseStmt()->print(os, indent);
+    }
 }
 
 void RuleNode::print(ostream& os, int indent) const
@@ -254,7 +281,6 @@ void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
     
 	const list<StmtNode*>* stmlist = stmts();
 
-	os << stmlist->size();
 	if(stmlist != NULL && stmlist->size()!=0)
 	{
 		for (list<StmtNode*>::const_iterator it = stmlist->begin(); it != stmlist->end(); it++)

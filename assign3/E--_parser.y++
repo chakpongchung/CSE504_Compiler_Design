@@ -94,12 +94,12 @@ void prt(string s)
 %type <primPatVal> any_event normal_event primitive_pattern pattern_type
 %type <strVector> event_param_list event_param_list_star
 %type <ruleNode> rule_decl
+%type <ifVal>  only_if_without_else 
 
 /* Uncomment types below as you start adding rules.
 They are commented right now to prevent compile errors.
 %type <exprVal> expr function_invocation asg_stmt
 %type <funIval> ev_or_fun
-%type <ifVal>  if_then_else_stmt 
 %type <typeList> formal_param_list 
 */
 
@@ -341,10 +341,10 @@ event_param_list		: TOK_IDENT					{   $$ = new vector<string>();
 
 /*Statements*/
 statement_decl			: TOK_SEMICOLON						{ $$ = NULL; }
-				| only_if_without_else %prec "then"			{ }
-				| only_if_without_else TOK_ELSE statement_decl		{ }
-				| function_invocation TOK_SEMICOLON			{  $$ = new ExprStmtNode($1); }
-				| assignment_decl TOK_SEMICOLON				{  $$ = new ExprStmtNode($1); }
+				| only_if_without_else %prec "then"			{ $$ = $1; }
+				| only_if_without_else TOK_ELSE statement_decl		{ $$ = new IfNode($1->cond() ,$1->thenStmt() ,$3); }
+				| function_invocation TOK_SEMICOLON			{ $$ = new ExprStmtNode($1); }
+				| assignment_decl TOK_SEMICOLON				{ $$ = new ExprStmtNode($1); }
 				| TOK_RETURN exp TOK_SEMICOLON 				{
 											    if((stm.currentScope())->kind() == SymTabEntry::Kind::FUNCTION_KIND)
 											      $$ = new ReturnStmtNode($2, (FunctionEntry *)stm.currentScope()); 
@@ -401,7 +401,7 @@ function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{  }
 /* If and Compound statements */
 
 
-only_if_without_else		: TOK_IF exp statement_decl
+only_if_without_else		: TOK_IF exp statement_decl       { $$ = new IfNode($2, $3); }
 ;
 
 compound_statement_decl		: TOK_LBRACE statement_decl_list TOK_RBRACE			{ $$ = new CompoundStmtNode($2); }
