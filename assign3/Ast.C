@@ -45,6 +45,21 @@ void RefExprNode::print(ostream& out, int indent) const
         out << value() ;
 }
 
+void CompoundStmtNode::print(ostream& os, int indent) const
+{
+	os << "{";
+	CompoundStmtNode::printWithoutBraces(ostream& os, int indent);
+	os << "}";
+}
+
+void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
+{
+    
+	list<StmtNode*>* stmlist = stmts();
+	for (list<StmtNode*>::iterator it = stmlist.begin(); it != stmlist.end(); it++)
+	        os << *it;
+}
+
 /*
 void ReturnStmtNode::print(ostream& out, int indent) const
 {

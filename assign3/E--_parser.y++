@@ -85,7 +85,8 @@ void prt(string s)
 %type <cVal> TOK_STRCONST
 %type <valNode> literal_decl literal_prt
 %type <stmtVal> statement_decl
-
+%type <stmtList> statement_decl_list
+%type <compoundStmtVal> compound_statement_star compound_statement_decl
 
 /* Uncomment types below as you start adding rules.
 They are commented right now to prevent compile errors.
@@ -96,8 +97,6 @@ They are commented right now to prevent compile errors.
 %type <ruleNode> rule
 %type <strVector> id_list id_plus
 %type <funIval> ev_or_fun
-%type <stmtList> stmt_plus
-%type <compoundStmtVal> compoundStmt fun_rest
 %type <ifVal>  if_then_else_stmt 
 
 %type <typeList> formal_param_list 
@@ -297,8 +296,13 @@ statement_decl			: TOK_SEMICOLON
 				| error TOK_SEMICOLON					{errMsg("Syntax error while parsing a statement");}
 ;
 
-statement_decl_list		: statement_decl
-				| statement_decl_list statement_decl
+statement_decl_list		: statement_decl					{ 
+
+											    $$ = new list<StmtNode*>;
+											    $$->push_back($1);
+											}
+
+				| statement_decl_list statement_decl			{   $$->push_back($2); }
 ;
 
 function_invocation		: TOK_IDENT function_invocation_list	{ prt("FunctionInvocation"); }
@@ -319,23 +323,24 @@ function_invocation_list	: TOK_LPAREN function_list TOK_RPAREN
 
 
 
-function_body_decl		: variable_decl_list statement_decl_list    {}
-				| statement_decl_list
+function_body_decl		: variable_decl_list statement_decl_list			{ stm.currentScope()->body(new CompoundStmt($2)); }
+				| statement_decl_list						{ stm.currentScope()->body(new CompoundStmt($1)); }
 ;
 
 function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{  }
 ;
 
-/* If and Compund statements */
+/* If and Compound statements */
+
 
 only_if_without_else		: TOK_IF exp statement_decl
 ;
 
-compound_statement_decl		: TOK_LBRACE statement_decl_list TOK_RBRACE { prt("CompoundStmt"); }
+compound_statement_decl		: TOK_LBRACE statement_decl_list TOK_RBRACE			{ $$ = new CompoundStmtNode($2); }
 ;
 
-compound_statement_star		: compound_statement_decl	%prec "reduce"
-				| compound_statement_decl TOK_SEMICOLON
+compound_statement_star		: compound_statement_decl	%prec "reduce"			{ $$ = new CompoundStmtNode($1); }
+				| compound_statement_decl TOK_SEMICOLON				{ $$ = new CompoundStmtNode($1); }
 ;
 
 ref_exp				: TOK_IDENT			{ $$ = new RefExprNode($1); }
