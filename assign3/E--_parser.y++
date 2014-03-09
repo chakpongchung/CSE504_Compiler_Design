@@ -36,6 +36,7 @@ void prt(string s)
 
   EventEntry*        eventEntry;                        
   VariableEntry*     variableEntry;
+  vector<VariableEntry*>* vEntryList;
   FunctionEntry*     functionEntry;
 
   BasePatNode*       patVal;
@@ -70,11 +71,11 @@ void prt(string s)
 
 /******************************** Type Info ********************************/
 
-%type <cVal> TOK_IDENT TOK_PRINT variable_name
-%type <strVector> variable_name_decl
+%type <cVal> TOK_IDENT TOK_PRINT
+/*%type <strVector> variable_name_decl*/
 %type <classEntry> class_decl
 %type <typeVal> type_decl base_type 
-%type <variableEntry> variable_decl param_decl
+%type <variableEntry> variable_decl param_decl variable_name
 %type <uVal> TOK_UINTNUM 
 %type <dVal> TOK_DOUBLENUM 
 %type <eventEntry> event_decl_hdr param_list_star
@@ -88,6 +89,7 @@ void prt(string s)
 %type <stmtList> statement_decl_list
 %type <compoundStmtVal> compound_statement_star compound_statement_decl
 %type <exprList> inside_function function_list function_invocation_list
+%type <vEntryList> variable_name_decl
 
 /* Uncomment types below as you start adding rules.
 They are commented right now to prevent compile errors.
@@ -124,6 +126,7 @@ They are commented right now to prevent compile errors.
 %right TOK_DOUBLE_COLON
 
 %left  TOK_PLUS TOK_MINUS
+
 %left  TOK_MULT TOK_DIV TOK_MOD
 %right TOK_UMINUS 
 
@@ -184,7 +187,6 @@ type_decl		: base_type {$$ = $1;}
 /* Literals */
 integer_literal_decl	: TOK_UINTNUM			{ 
 							    $$ = new Value($1,Type::TypeTag::UINT);
-							    cout << $1 << endl;
 						        }
 ;
 
@@ -356,12 +358,12 @@ variable_param_list		: TOK_IDENT  { }
 				| variable_param_list TOK_COMMA TOK_IDENT {}
 ;
 
-variable_name			: TOK_IDENT				{ $$ = $1; }
-			//	| TOK_IDENT TOK_ASSIGN exp		{  }
+variable_name			: TOK_IDENT				{ $$ = new VariableEntry($1, VariableEntry::VarKind::LOCAL_VAR, NULL, NULL); }
+				| TOK_IDENT TOK_ASSIGN exp		{ $$ = new VariableEntry($1, VariableEntry::VarKind::LOCAL_VAR, NULL, $3); }
 ;
 
 // For variables 
-variable_name_decl	: variable_name					{	$$ = new vector<string>();
+variable_name_decl	: variable_name					{	$$ = new vector<VariableEntry*>;
 										$$->push_back($1); }
 
 			| variable_name_decl TOK_COMMA variable_name	{	$$->push_back($3); }
@@ -377,8 +379,10 @@ variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{
 									    	
 											vk = VariableEntry::VarKind::GLOBAL_VAR;
 										    }
-										    for(vector<string>::iterator it = $2->begin(); it != $2->end(); ++it) {
-											stm.insert(new VariableEntry(*it, vk, $1));
+										    for(vector<VariableEntry*>::iterator it = $2->begin(); it != $2->end(); ++it) {
+											  (*it)->varKind(vk);
+											  (*it)->type($1);
+											  stm.insert(*it);
 										    }
 										}
 ;

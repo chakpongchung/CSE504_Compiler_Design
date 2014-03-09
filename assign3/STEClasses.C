@@ -23,6 +23,11 @@ void ClassEntry::print(ostream& out, int indent) const
 void VariableEntry::print(ostream& out, int indent) const
 {
     out << type()->fullName() << " " << name();
+    if(initVal() != NULL)
+    {
+	out<< "=";
+	initVal()->print(out, indent);
+    }
 }
 
 void FunctionEntry::print(ostream& out, int indent) const
