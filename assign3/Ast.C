@@ -122,18 +122,77 @@ bool PatNode::hasAnyOrOther() const
 
 void RuleNode::print(ostream& os, int indent) const
 {
+	if(pat()!=NULL)
+	    pat()->print(os, indent);
+	os << "-->";
 
+	if(ruleEntry()!=NULL)
+	    ruleEntry()->print(os, indent);
+	if(reaction()!=NULL)
+	    reaction()->print(os, indent);
 }
 
 void PatNode::print(ostream& os, int indent) const
 {
+    switch(kind())
+    {
+	case BasePatNode::PatNodeKind::PRIMITIVE:	pat1()->print(os,indent);
+		    
+							break;
 
+	case BasePatNode::PatNodeKind::STAR:		pat1()->print(os,indent);
+							os << "*";
+	                                                break;
+
+	case BasePatNode::PatNodeKind::NEG:		os << "~";
+							pat1()->print(os,indent);
+	                                                break;
+
+	case BasePatNode::PatNodeKind::OR:		pat1()->print(os,indent);
+							os << "\\/";
+							pat2()->print(os,indent);
+
+	                                                break;
+							
+	case BasePatNode::PatNodeKind::SEQ:		pat1()->print(os,indent);
+							os << ":";
+							pat2()->print(os,indent);
+							break;
+	default:					
+							pat1()->print(os,indent);
+							pat2()->print(os,indent);
+
+    }
 }
 
 
 void PrimitivePatNode::print(ostream& os, int indent) const
 {
+    os << "(";
+    if(event()!=NULL)
+	os << event()->name();
 
+    int printComma = false;
+    const vector<const VariableEntry*> *ve = params();
+    if(ve!=NULL)
+    {
+    os << "(";
+    for (vector<const VariableEntry*>::const_iterator it = ve->begin(); it != ve->end(); ++it)
+    {
+          if(printComma)
+	      os<< ",";
+		
+	  (*it)->print(os, indent);
+	  printComma = true;
+    }
+    os << ")";
+    }
+    if(cond() != NULL)
+    {
+	os << "|" ;
+	cond()->print(os, indent);
+    }
+    os << ")";
 }
 
 void InvocationNode::print(ostream& os, int indent) const
@@ -141,12 +200,14 @@ void InvocationNode::print(ostream& os, int indent) const
     
 	const vector<ExprNode*>* param = params();
 	os << ste_->name();
-	if(param->size() == 0)
-	{   os << "();";
-	    prtln(os, indent);
-	}
-	else
+	if(param!=NULL)
 	{
+		if(param->size() == 0)
+		{   os << "();";
+		    prtln(os, indent);
+		}
+	    	else
+		{
 		os << "(";
 		int printComma = false;
 	 	for (vector<ExprNode*>::const_iterator it = param->begin(); it != param->end(); it++)
@@ -158,6 +219,12 @@ void InvocationNode::print(ostream& os, int indent) const
 			printComma = true;
 		}
 		os << ")";
+		}
+	}
+	else
+	{
+	    os << "()";
+
 	}
 }
 
@@ -186,13 +253,18 @@ void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
 {
     
 	const list<StmtNode*>* stmlist = stmts();
-	for (list<StmtNode*>::const_iterator it = stmlist->begin(); it != stmlist->end(); it++)
-	{
-	    prtSpace(os, indent);
-	    (*it)->print(os, indent);
-	    os<< ";";
-	    prtln(os, indent);
 
+	os << stmlist->size();
+	if(stmlist != NULL && stmlist->size()!=0)
+	{
+		for (list<StmtNode*>::const_iterator it = stmlist->begin(); it != stmlist->end(); it++)
+		{
+		    prtSpace(os, indent);
+		    (*it)->print(os, indent);
+		     os<< ";";
+		     prtln(os, indent);
+
+		}
 	}
 }
 

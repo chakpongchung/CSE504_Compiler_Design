@@ -236,7 +236,7 @@ exp			: literal_prt			{ $$ = $1; }
         		| TOK_BITNOT exp        	{ $$ = new OpNode(OpNode::OpCode::BITNOT, $2);}		
         		| TOK_MINUS exp	        	{ $$ = new OpNode(OpNode::OpCode::UMINUS, $2);}
         		| TOK_NOT exp        		{ $$ = new OpNode(OpNode::OpCode::NOT, $2);}
-        		| TOK_LPAREN exp TOK_RPAREN	{ }
+        		| TOK_LPAREN exp TOK_RPAREN	{ $$ = $2; }
          
 ;
 
@@ -244,23 +244,30 @@ exp			: literal_prt			{ $$ = $1; }
 rule_star			: rule_event					{ }
 ;
 
-rule_event			: rule_decl					{  }
-				| rule_event rule_decl				{  }
+rule_event			: rule_decl					{  
+										    if((stm.currentScope())->kind() == SymTabEntry::Kind::GLOBAL_KIND)
+										    {	
+											// stm.leaveScope();
+											((GlobalEntry *)(stm.currentScope()))->addRule($1);
+										    }
+										}
+				| rule_event rule_decl				{  
+										    if((stm.currentScope())->kind() == SymTabEntry::Kind::GLOBAL_KIND)
+										    {	
+											// stm.leaveScope();
+											((GlobalEntry *)(stm.currentScope()))->addRule($2);
+										    }
+										}
 ;
 
 rule_decl			: rule statement_decl				{  
-										    if((stm.currentScope())->kind() == SymTabEntry::Kind::RULE_KIND)
-										    {	
-											$$ = new RuleNode((BlockEntry *)stm.currentScope(), $1, $2); 
-											stm.leaveScope();
-											((GlobalEntry *)(stm.currentScope()))->addRule($$);
-										    }
+											$$ = new RuleNode(new RuleBlockEntry(), $1, $2); 
 
 										}
 ;
 
 rule				: event_pattern TOK_ARROW		        {
-										    stm.enterScope(new RuleBlockEntry());
+										    // stm.enterScope(new RuleBlockEntry());
 										    $$ = $1;
 										}
 ;
@@ -324,12 +331,16 @@ event_param_list_star		: /*empty*/			{ $$ = new vector<string>;}
 ;
 
 event_param_list		: TOK_IDENT					{   $$ = new vector<string>();
-										    $$->push_back($1);   
+										    if($1 != NULL)
+											$$->push_back($1);   
 										}
-				| event_param_list TOK_COMMA TOK_IDENT		{   $$->push_back($3);  }
+				| event_param_list TOK_COMMA TOK_IDENT		{ 
+										    if($3 != NULL)
+											$$->push_back($3);  
+										}
 
 /*Statements*/
-statement_decl			: TOK_SEMICOLON
+statement_decl			: TOK_SEMICOLON						{ $$ = NULL; }
 				| only_if_without_else %prec "then"			{ }
 				| only_if_without_else TOK_ELSE statement_decl		{ }
 				| function_invocation TOK_SEMICOLON			{  $$ = new ExprStmtNode($1); }
@@ -346,17 +357,27 @@ statement_decl			: TOK_SEMICOLON
 statement_decl_list		: statement_decl					{ 
 
 											    $$ = new list<StmtNode*>;
-											    $$->push_back($1);
+											    if($1 != NULL)
+												$$->push_back($1);
 											}
 
-				| statement_decl_list statement_decl			{   $$->push_back($2); }
+				| statement_decl_list statement_decl			{   
+												if($2 != NULL) 
+												$$->push_back($2);
+											}
 ;
 
 function_invocation		: TOK_IDENT function_invocation_list			{ $$ = new InvocationNode(stm.lookUp($1), $2); }
 ;
 
-inside_function			: exp							{ $$ = new vector<ExprNode*>(); $$->push_back($1);	}
-				| inside_function TOK_COMMA exp				{ $$->push_back($3); }
+inside_function			: exp							{ $$ = new vector<ExprNode*>();
+											  if ($1 != NULL)
+											    $$->push_back($1);
+											}
+				| inside_function TOK_COMMA exp				{ 
+											    if($3 != NULL)
+											    $$->push_back($3);
+											}
 ;
 
 function_list			: /*empty*/						{ $$ = NULL; }
@@ -409,9 +430,12 @@ variable_name			: TOK_IDENT				{ $$ = new VariableEntry($1, VariableEntry::VarKi
 
 // For variables 
 variable_name_decl	: variable_name					{	$$ = new vector<VariableEntry*>();
-										$$->push_back($1); }
+										if($1 != NULL)
+										    $$->push_back($1); }
 
-			| variable_name_decl TOK_COMMA variable_name	{	$$->push_back($3); }
+			| variable_name_decl TOK_COMMA variable_name	{   if($3 != NULL)	
+									    $$->push_back($3);
+									}
 
 ;
 
@@ -431,6 +455,7 @@ variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{
 										    }
 										}
 ;
+
 
 variable_decl_list	: variable_decl 
 			| variable_decl_list variable_decl
