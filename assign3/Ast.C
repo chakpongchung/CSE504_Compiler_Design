@@ -37,12 +37,103 @@ InvocationNode::InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param,
 	ste_ = ste;
 }
 
+PrimitivePatNode::PrimitivePatNode(EventEntry* ee, vector<VariableEntry*>* params, ExprNode* c, int line, int column, string file):
+    BasePatNode(BasePatNode::PatNodeKind::PRIMITIVE, line, column, file)
+{
+    ee_ = ee;
+    params_ = params;
+    cond_ = c;
+
+}
+
+PatNode::PatNode(PatNodeKind pk, BasePatNode *p1, BasePatNode*p2, int line, int column, string file):
+    BasePatNode(pk, line, column, file)
+{
+    pat1_ = p1;
+    pat2_ = p2;
+
+}
+
+RuleNode::RuleNode(BlockEntry *re, BasePatNode* pat, StmtNode* reaction,
+           int line, int column, string file):
+    AstNode(AstNode::NodeType::RULE_NODE, line, column, file)
+{
+    rste_ = re;
+    pat_ = pat;
+    reaction_ = reaction; 
+}
 
 RefExprNode::RefExprNode(const RefExprNode& ref):
     ExprNode(ref)
 {
     ext_ = ref.ext();
     sym_ = ref.symTabEntry();
+}
+
+bool PrimitivePatNode::hasSeqOps() const
+{
+    if(kind() == BasePatNode::PatNodeKind::SEQ)
+	return true;
+    else
+	return false;
+}
+
+bool PrimitivePatNode::hasNeg() const
+{
+
+    if(kind() == BasePatNode::PatNodeKind::NEG)
+	return true;
+    else
+	return false;
+}
+bool PrimitivePatNode::hasAnyOrOther() const
+{
+
+    if(kind() == BasePatNode::PatNodeKind::UNDEFINED)
+	return true;
+    else
+	return false;
+}
+
+bool PatNode::hasSeqOps() const
+{
+
+    if(kind() == BasePatNode::PatNodeKind::SEQ)
+	return true;
+    else
+	return false;
+}
+bool PatNode::hasNeg() const
+{
+
+    if(kind() == BasePatNode::PatNodeKind::NEG)
+	return true;
+    else
+	return false;
+}
+bool PatNode::hasAnyOrOther() const
+{
+
+    if(kind() == BasePatNode::PatNodeKind::UNDEFINED)
+	return true;
+    else
+	return false;
+}
+
+void RuleNode::print(ostream& os, int indent) const
+{
+
+}
+
+void PatNode::print(ostream& os, int indent) const
+{
+
+}
+
+
+void PrimitivePatNode::print(ostream& os, int indent) const
+{
+
 }
 
 void InvocationNode::print(ostream& os, int indent) const

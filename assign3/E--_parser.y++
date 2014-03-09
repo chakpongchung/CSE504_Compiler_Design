@@ -305,12 +305,12 @@ normal_event		 	: TOK_IDENT TOK_LPAREN event_param_list_star TOK_RPAREN	    {
 											    if(stm.lookUp($1)!=NULL && (stm.lookUp($1)->kind() == SymTabEntry::Kind::EVENT_KIND))
     											    {
 											         ee = (EventEntry *)(stm.lookUp($1));
-											         st = ((SymTabEntry *)ee)->SymTab();
+											         st = ((SymTabEntry *)ee)->symTab();
 											         vector<VariableEntry*> *ve = new vector<VariableEntry*>();
 												 vector<string>::const_iterator sit = $3->begin();
 											    for(SymTab::const_iterator it = st->begin(); it != st->end(); ++it, ++sit)
 											    {
-							    	VariableEntry *ve_elem = new VariableEntry(*sit,VariableEntry::VarKind::PARAM_VAR, ((VariableEntry *)(it))->type());
+							    	VariableEntry *ve_elem = new VariableEntry(*sit,VariableEntry::VarKind::PARAM_VAR, ((VariableEntry *)(*it))->type());
 												ve->push_back(ve_elem);
 											     }
 

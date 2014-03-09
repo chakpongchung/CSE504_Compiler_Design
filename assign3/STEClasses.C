@@ -29,6 +29,11 @@ void VariableEntry::print(ostream& out, int indent) const
 	initVal()->print(out, indent);
     }
 }
+  
+void BlockEntry::print(ostream& out, int indent) const
+{
+
+}
 
 void FunctionEntry::print(ostream& out, int indent) const
 {
