@@ -17,7 +17,9 @@ ExprNode::ExprNode(ExprNodeType et, const Value* val, int line, int column,
 				   string file):
 	AstNode(AstNode::NodeType::EXPR_NODE, line, column, file)
 {
-	// Add your code here
+    exprType_ = et;
+    val_ = val;
+    
 }
 
 
@@ -37,7 +39,11 @@ RefExprNode::RefExprNode(const RefExprNode& ref):
 
 void ValueNode::print(ostream& out, int indent) const
 {
-      value()->print(out, indent) ;
+    if(value() != NULL) {
+	value()->print(out, indent);
+    }
+    else
+	out << "NULL Value";
 }
 
 void RefExprNode::print(ostream& out, int indent) const
@@ -57,7 +63,13 @@ void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
     
 	const list<StmtNode*>* stmlist = stmts();
 	for (list<StmtNode*>::const_iterator it = stmlist->begin(); it != stmlist->end(); it++)
-	         (*it)->print(os, indent);
+	{
+	    prtSpace(os, indent);
+	    (*it)->print(os, indent);
+	    os<< ";";
+	    prtln(os, indent);
+
+	}
 }
 
 /*
@@ -72,7 +84,9 @@ void ReturnStmtNode::print(ostream& out, int indent) const
 
 ExprNode::ExprNode(const ExprNode& e) : AstNode(e)
 {
-	// Add your code here
+	exprType_ = e.exprNodeType();
+	val_ = e.value();
+	coercedType_ = e.coercedType();
 }
 /****************************************************************/
 extern const OpNode::OpInfo opInfo[] = {
