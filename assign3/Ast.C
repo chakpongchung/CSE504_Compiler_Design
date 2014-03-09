@@ -30,11 +30,44 @@ RefExprNode::RefExprNode(string ext, const SymTabEntry* ste,int line, int column
 	sym_ = ste;
 }
 
+
+InvocationNode::InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param, int line, int column, string file): ExprNode(ExprNode::ExprNodeType::REF_EXPR_NODE, NULL, line, column, file)
+{
+	params_ = param;
+	ste_ = ste;
+}
+
+
 RefExprNode::RefExprNode(const RefExprNode& ref):
     ExprNode(ref)
 {
     ext_ = ref.ext();
     sym_ = ref.symTabEntry();
+}
+
+void InvocationNode::print(ostream& os, int indent) const
+{
+    
+	const vector<ExprNode*>* param = params();
+	os << ste_->name();
+	if(param->size() == 0)
+	{   os << "();";
+	    prtln(os, indent);
+	}
+	else
+	{
+		os << "(";
+		int printComma = false;
+	 	for (vector<ExprNode*>::const_iterator it = param->begin(); it != param->end(); it++)
+	    	{
+		      if(printComma)
+			    os<< ",";
+		
+		     (*it)->print(os, indent);
+			printComma = true;
+		}
+		os << ")";
+	}
 }
 
 void ValueNode::print(ostream& out, int indent) const
@@ -82,12 +115,23 @@ void ReturnStmtNode::print(ostream& out, int indent) const
 }
 */
 
+
+
+InvocationNode::InvocationNode(const InvocationNode& e) : ExprNode(e)
+{
+	ste_ = e.symTabEntry();
+	params_ = e.params_;
+}
+
 ExprNode::ExprNode(const ExprNode& e) : AstNode(e)
 {
 	exprType_ = e.exprNodeType();
 	val_ = e.value();
 	coercedType_ = e.coercedType();
 }
+
+
+
 /****************************************************************/
 extern const OpNode::OpInfo opInfo[] = {
   // print name, arity, paren_flag, fixity, arg types, out type, constraints
