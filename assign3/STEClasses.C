@@ -57,10 +57,13 @@ void FunctionEntry::print(ostream& out, int indent) const
     }
     out << ")";
 
-    if(st != NULL && i < st->size())
+    if((st != NULL && i < st->size()) || body())
     {
         out << " {";
-        printST(out, indent,'\0', ';',true, i, st->size());
+	if(st != NULL && i < st->size())
+	        printST(out, indent,'\0', ';',true, i, st->size());
+	if(body())
+		body()->printWithoutBraces(out, indent);
         out << "}";
     }
 

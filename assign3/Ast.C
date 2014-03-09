@@ -37,27 +37,27 @@ RefExprNode::RefExprNode(const RefExprNode& ref):
 
 void ValueNode::print(ostream& out, int indent) const
 {
-        out << value() ;
+      value()->print(out, indent) ;
 }
 
 void RefExprNode::print(ostream& out, int indent) const
 {
-        out << value() ;
+        out << ext() ;
 }
 
 void CompoundStmtNode::print(ostream& os, int indent) const
 {
 	os << "{";
-	CompoundStmtNode::printWithoutBraces(ostream& os, int indent);
+	CompoundStmtNode::printWithoutBraces(os, indent);
 	os << "}";
 }
 
 void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
 {
     
-	list<StmtNode*>* stmlist = stmts();
-	for (list<StmtNode*>::iterator it = stmlist.begin(); it != stmlist.end(); it++)
-	        os << *it;
+	const list<StmtNode*>* stmlist = stmts();
+	for (list<StmtNode*>::const_iterator it = stmlist->begin(); it != stmlist->end(); it++)
+	         (*it)->print(os, indent);
 }
 
 /*

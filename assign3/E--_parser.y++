@@ -162,21 +162,21 @@ class_decl		: TOK_CLASS TOK_IDENT {
 
 //Base type
 
-base_type		: TOK_INT		 { $$ = new Type(Type::TypeTag::INT);}
-			| TOK_BOOL		 { $$ = new Type(Type::TypeTag::BOOL); }
-			| TOK_BYTE		{ $$ = new Type(Type::TypeTag::BYTE); }
-			| TOK_DOUBLE		{ $$ = new Type(Type::TypeTag::DOUBLE); }
-			| TOK_VOID		{ $$ = new Type(Type::TypeTag::VOID); }
-			| TOK_STRING		{ $$ = new Type(Type::TypeTag::STRING); }
-			| TOK_UNSIGNED TOK_INT	    { $$ = new Type(Type::TypeTag::UINT); }
-			| TOK_IDENT		    { 
-							SymTabEntry *ste = stm.lookUp($1);
-							if(ste == nullptr) {
-							    $$ = new Type(Type::TypeTag::UNKNOWN);
-							} else {
-							    $$ = new Type(stm.lookUp($1), Type::TypeTag::CLASS);
-							}
-						    }
+base_type		: TOK_INT			 { $$ = new Type(Type::TypeTag::INT);}
+			| TOK_BOOL			{ $$ = new Type(Type::TypeTag::BOOL); }
+			| TOK_BYTE			{ $$ = new Type(Type::TypeTag::BYTE); }
+			| TOK_DOUBLE			{ $$ = new Type(Type::TypeTag::DOUBLE); }
+			| TOK_VOID			{ $$ = new Type(Type::TypeTag::VOID); }
+			| TOK_STRING			{ $$ = new Type(Type::TypeTag::STRING); }
+			| TOK_UNSIGNED TOK_INT		{ $$ = new Type(Type::TypeTag::UINT); }
+			| TOK_IDENT			{ 
+								SymTabEntry *ste = stm.lookUp($1);
+								if(ste == nullptr) {
+								    $$ = new Type(Type::TypeTag::UNKNOWN);
+								} else {
+								    $$ = new Type(stm.lookUp($1), Type::TypeTag::CLASS);
+								}
+							 }
 ;
 
 type_decl		: base_type {$$ = $1;} 		
@@ -282,18 +282,17 @@ normal_event 			: TOK_IDENT TOK_LPAREN variable_param_list_star TOK_RPAREN			{ p
 
 /*Statements*/
 statement_decl			: TOK_SEMICOLON
-				| only_if_without_else %prec "then"			{ prt("IfThenStmt"); }
-				| only_if_without_else TOK_ELSE statement_decl		{ prt("IfThenElseStmt"); }
-				| function_invocation TOK_SEMICOLON			{ prt("FunctionInvocationStmt"); }
-				| assignment_decl TOK_SEMICOLON				{ prt("AssignStmt"); }
+				| only_if_without_else %prec "then"			{ }
+				| only_if_without_else TOK_ELSE statement_decl		{ }
+				| function_invocation TOK_SEMICOLON			{ }
+				| assignment_decl TOK_SEMICOLON				{ }
 				| TOK_RETURN exp TOK_SEMICOLON 				{
 											    if((stm.currentScope())->kind() == SymTabEntry::Kind::FUNCTION_KIND)
 											      $$ = new ReturnStmtNode($2, (FunctionEntry *)stm.currentScope()); 
 											    else
 											      $$ = new ReturnStmtNode($2, NULL);
 											}
-				| compound_statement_star
-				| error TOK_SEMICOLON					{errMsg("Syntax error while parsing a statement");}
+				| compound_statement_star				{ $$ = $1; }
 ;
 
 statement_decl_list		: statement_decl					{ 
@@ -323,8 +322,8 @@ function_invocation_list	: TOK_LPAREN function_list TOK_RPAREN
 
 
 
-function_body_decl		: variable_decl_list statement_decl_list			{ stm.currentScope()->body(new CompoundStmt($2)); }
-				| statement_decl_list						{ stm.currentScope()->body(new CompoundStmt($1)); }
+function_body_decl		: variable_decl_list statement_decl_list			{ ((FunctionEntry *)stm.currentScope())->body(new CompoundStmtNode($2)); }
+				| statement_decl_list						{ ((FunctionEntry *)stm.currentScope())->body(new CompoundStmtNode($1)); }
 ;
 
 function_body_invoc		: TOK_LBRACE function_body_decl TOK_RBRACE	{  }
@@ -339,8 +338,8 @@ only_if_without_else		: TOK_IF exp statement_decl
 compound_statement_decl		: TOK_LBRACE statement_decl_list TOK_RBRACE			{ $$ = new CompoundStmtNode($2); }
 ;
 
-compound_statement_star		: compound_statement_decl	%prec "reduce"			{ $$ = new CompoundStmtNode($1); }
-				| compound_statement_decl TOK_SEMICOLON				{ $$ = new CompoundStmtNode($1); }
+compound_statement_star		: compound_statement_decl	%prec "reduce"			{ $$ = $1; }
+				| compound_statement_decl TOK_SEMICOLON				{ $$ = $1; }
 ;
 
 ref_exp				: TOK_IDENT			{ $$ = new RefExprNode($1); }
