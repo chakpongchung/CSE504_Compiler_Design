@@ -92,9 +92,9 @@
      TOK_TRUE = 310,
      TOK_FALSE = 311,
      TOK_IDENT = 312,
-     TOK_DOUBLE_COLON = 313,
-     TOK_LBRACK = 314,
-     TOK_DOT = 315
+     TOK_DOUBLE_COLON = 315,
+     TOK_LBRACK = 316,
+     TOK_DOT = 317
    };
 #endif
 

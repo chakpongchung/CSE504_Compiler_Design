@@ -105,6 +105,8 @@ They are commented right now to prevent compile errors.
 
 /*********************   Precedence and Associativity    ********************/
 
+%right      TOK_ELSE "then"
+%right	    TOK_SEMICOLON "reduce"
 %nonassoc TOK_ASSIGN
 
 %left  TOK_PAT_OR 
@@ -413,16 +415,6 @@ compound_statement_star		: compound_statement_decl	%prec "reduce"			{ $$ = $1; }
 ;
 
 ref_exp				: TOK_IDENT			{ $$ = new RefExprNode($1); }
-;
-
-/* Variable parameter list */
-
-variable_param_list_star	: /*empty*/
-				| variable_param_list
-;
-
-variable_param_list		: TOK_IDENT  { }
-				| variable_param_list TOK_COMMA TOK_IDENT {}
 ;
 
 variable_name			: TOK_IDENT				{ $$ = new VariableEntry($1, VariableEntry::VarKind::LOCAL_VAR, NULL, NULL); }

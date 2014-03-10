@@ -8,8 +8,8 @@ void GlobalEntry::print(ostream& out, int indent) const
     const vector<RuleNode*> vr = rules();
     for(vector<RuleNode*>::const_iterator it = vr.begin(); it != vr.end(); it++)
     {
-	(*it)->print(out, indent + STEP_INDENT);
-	endln(out, indent);
+        (*it)->print(out, indent + STEP_INDENT);
+        endln(out, indent);
 
     }
     prtSpace(out, indent + STEP_INDENT);
@@ -31,11 +31,11 @@ void VariableEntry::print(ostream& out, int indent) const
     out << type()->fullName() << " " << name();
     if(initVal() != NULL)
     {
-	out<< "=";
-	initVal()->print(out, indent);
+        out<< "=";
+        initVal()->print(out, indent);
     }
 }
-  
+
 void BlockEntry::print(ostream& out, int indent) const
 {
 
@@ -76,10 +76,10 @@ void FunctionEntry::print(ostream& out, int indent) const
     if((st != NULL && i < st->size()) || body())
     {
         out << " {";
-	if(st != NULL && i < st->size())
-	        printST(out, indent,'\0', ';',true, i, st->size());
-	if(body())
-		body()->printWithoutBraces(out, indent);
+        if(st != NULL && i < st->size())
+            printST(out, indent,'\0', ';',true, i, st->size());
+        if(body())
+            body()->printWithoutBraces(out, indent);
         out << "}";
     }
 
