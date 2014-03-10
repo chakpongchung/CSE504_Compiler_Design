@@ -130,19 +130,18 @@ bool PatNode::hasAnyOrOther() const
 
 void IfNode::print(ostream& os, int indent) const
 {
-    os << "if";
+    os << "if ";
     if(cond()!=NULL)
-    {	os << "(";
+    {	os << "( ";
 	cond()->print(os, indent);
-	os << ")";
+	os << ") ";
     }
-	prtln(os, indent);
     if(thenStmt()!=NULL)
 	thenStmt()->print(os, indent);
     if(elseStmt()!=NULL)
     {
-	os << "else";
 	prtln(os, indent);
+	os << "else";
 	elseStmt()->print(os, indent);
     }
 }
@@ -151,16 +150,18 @@ void RuleNode::print(ostream& os, int indent) const
 {
 	if(pat()!=NULL)
 	    pat()->print(os, indent);
-	os << "-->";
+	os << "-->  ";
 
 	if(ruleEntry()!=NULL)
 	    ruleEntry()->print(os, indent);
 	if(reaction()!=NULL)
 	    reaction()->print(os, indent);
+	os << ";";
 }
 
 void PatNode::print(ostream& os, int indent) const
 {
+    os << "(";
     switch(kind())
     {
 	case BasePatNode::PatNodeKind::PRIMITIVE:	pat1()->print(os,indent);
@@ -168,15 +169,15 @@ void PatNode::print(ostream& os, int indent) const
 							break;
 
 	case BasePatNode::PatNodeKind::STAR:		pat1()->print(os,indent);
-							os << "*";
+							os << "**";
 	                                                break;
 
-	case BasePatNode::PatNodeKind::NEG:		os << "~";
+	case BasePatNode::PatNodeKind::NEG:		os << "!";
 							pat1()->print(os,indent);
 	                                                break;
 
 	case BasePatNode::PatNodeKind::OR:		pat1()->print(os,indent);
-							os << "\\/";
+							os << " \\/ ";
 							pat2()->print(os,indent);
 
 	                                                break;
@@ -190,28 +191,32 @@ void PatNode::print(ostream& os, int indent) const
 							pat2()->print(os,indent);
 
     }
+    os << ")";
 }
 
 
 void PrimitivePatNode::print(ostream& os, int indent) const
 {
-    os << "(";
     if(event()!=NULL)
 	os << event()->name();
 
     int printComma = false;
     const vector<const VariableEntry*> *ve = params();
-    if(ve!=NULL)
-    {
-    os << "(";
-    for (vector<const VariableEntry*>::const_iterator it = ve->begin(); it != ve->end(); ++it)
-    {
-          if(printComma)
-	      os<< ",";
-		
-	  (*it)->print(os, indent);
-	  printComma = true;
-    }
+
+    if(event()->name().compare("any") != 0){
+
+	os << "(";
+	if(ve!=NULL)
+	{
+	    for (vector<const VariableEntry*>::const_iterator it = ve->begin(); it != ve->end(); ++it)
+	    {
+		if(printComma)
+		    os<< ",";
+
+		(*it)->print(os, indent);
+		printComma = true;
+	    }
+	}
     os << ")";
     }
     if(cond() != NULL)
@@ -219,7 +224,7 @@ void PrimitivePatNode::print(ostream& os, int indent) const
 	os << "|" ;
 	cond()->print(os, indent);
     }
-    os << ")";
+
 }
 
 void InvocationNode::print(ostream& os, int indent) const
@@ -272,8 +277,12 @@ void RefExprNode::print(ostream& out, int indent) const
 void CompoundStmtNode::print(ostream& os, int indent) const
 {
 	os << "{";
-	CompoundStmtNode::printWithoutBraces(os, indent);
+	if(stmts() !=NULL && stmts()->size() > 0){
+	    prtln(os, indent);
+	    CompoundStmtNode::printWithoutBraces(os, indent);
+	}
 	os << "}";
+	endln(os, indent);
 }
 
 void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const

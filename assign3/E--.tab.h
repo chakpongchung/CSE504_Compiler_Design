@@ -112,6 +112,7 @@ typedef union YYSTYPE
   char*              cVal;
   vector<string>*    strVector;
   Value*             valVal;
+  ValueNode*	     valNode;
 
   ExprNode*          exprVal;
   vector<ExprNode*>* exprList;
@@ -123,6 +124,7 @@ typedef union YYSTYPE
 
   EventEntry*        eventEntry;                        
   VariableEntry*     variableEntry;
+  vector<VariableEntry*>* vEntryList;
   FunctionEntry*     functionEntry;
 
   BasePatNode*       patVal;
@@ -141,7 +143,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 145 "E--_parser.H"
+#line 147 "E--_parser.H"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

@@ -9,20 +9,21 @@ void GlobalEntry::print(ostream& out, int indent) const
     for(vector<RuleNode*>::const_iterator it = vr.begin(); it != vr.end(); it++)
     {
 	(*it)->print(out, indent + STEP_INDENT);
+	endln(out, indent);
+
     }
+    prtSpace(out, indent + STEP_INDENT);
 }
 
 void EventEntry::print(ostream& out, int indent) const
 {
-    out << "Event " << name();
-    out << "(";
-    printST(out, indent,'\0', '\0', false);
-    out << ")";
+    out << "event " << name();
+    printST(out, indent,'(', ')', false);
 }
 
 void ClassEntry::print(ostream& out, int indent) const
 {
-    out <<  "Class " << name();
+    out <<  "class " << name();
 }
 
 void VariableEntry::print(ostream& out, int indent) const

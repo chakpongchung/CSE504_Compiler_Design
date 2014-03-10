@@ -292,7 +292,7 @@ pattern_type				: normal_event				{ $$ = $1; }
 					| any_event				{ $$ = $1; }
 ;
 
-any_event			: TOK_ANY				    { $$ = new PrimitivePatNode(new EventEntry("Any"),NULL); }
+any_event			: TOK_ANY				    { $$ = new PrimitivePatNode(new EventEntry("any"),NULL); }
 ;
 
 
@@ -312,15 +312,16 @@ normal_event		 	: TOK_IDENT TOK_LPAREN event_param_list_star TOK_RPAREN	    {
 											    if(stm.lookUp($1)!=NULL && (stm.lookUp($1)->kind() == SymTabEntry::Kind::EVENT_KIND))
     											    {
 											         ee = (EventEntry *)(stm.lookUp($1));
-											         st = ((SymTabEntry *)ee)->symTab();
 											         vector<VariableEntry*> *ve = new vector<VariableEntry*>();
+											         st = ((SymTabEntry *)ee)->symTab();
+												 if(st) {
 												 vector<string>::const_iterator sit = $3->begin();
 											    for(SymTab::const_iterator it = st->begin(); it != st->end(); ++it, ++sit)
 											    {
 							    	VariableEntry *ve_elem = new VariableEntry(*sit,VariableEntry::VarKind::PARAM_VAR, ((VariableEntry *)(*it))->type());
 												ve->push_back(ve_elem);
 											     }
-
+													}	
 												$$ = new PrimitivePatNode((EventEntry *)stm.lookUp($1), ve);
 											    }
 										    }
@@ -482,7 +483,7 @@ formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN		   { }
 				
 ;
 
-function_header			: type_decl TOK_IDENT			{    $$ = new FunctionEntry($2); stm.insert($$); stm.enterScope($$); }
+function_header			: type_decl TOK_IDENT			{    $$ = new FunctionEntry($2, $1); stm.insert($$); stm.enterScope($$); }
 
 function_decl_only		: function_header formal_param_list_decl		    {}
 ;
