@@ -169,35 +169,51 @@ void PatNode::print(ostream& os, int indent) const
     switch(kind())
     {
     case BasePatNode::PatNodeKind::PRIMITIVE:
-        pat1()->print(os,indent);
+        if(pat1()!=NULL)
+	    pat1()->print(os,indent);
 
         break;
 
     case BasePatNode::PatNodeKind::STAR:
-        pat1()->print(os,indent);
+        if(pat1()!=NULL)
+	    pat1()->print(os,indent);
         os << "**";
         break;
 
     case BasePatNode::PatNodeKind::NEG:
         os << "!";
-        pat1()->print(os,indent);
+        if(pat1()!=NULL)
+	    pat1()->print(os,indent);
         break;
 
     case BasePatNode::PatNodeKind::OR:
-        pat1()->print(os,indent);
-        os << " \\/ ";
-        pat2()->print(os,indent);
+        if(pat1()!=NULL)
+	{
+	    pat1()->print(os,indent);
+	    os << " \\/ ";
+	    if(pat2()!=NULL)
+		    pat2()->print(os,indent);	
+	}
 
         break;
 
     case BasePatNode::PatNodeKind::SEQ:
-        pat1()->print(os,indent);
-        os << ":";
-        pat2()->print(os,indent);
+        if(pat1()!=NULL)
+        {
+	    pat1()->print(os,indent);
+	    os << ":";
+	    if(pat2()!=NULL)
+		pat2()->print(os,indent);
+	}
+
         break;
+    case BasePatNode::PatNodeKind::UNDEFINED:
+	os << "UNKNOWN Event Called";
     default:
-        pat1()->print(os,indent);
-        pat2()->print(os,indent);
+        if(pat1()!=NULL)
+	    pat1()->print(os,indent);
+	if(pat2()!=NULL)
+	    pat2()->print(os,indent);
 
     }
     os << ")";
@@ -212,7 +228,7 @@ void PrimitivePatNode::print(ostream& os, int indent) const
     int printComma = false;
     const vector<const VariableEntry*> *ve = params();
 
-    if(event()->name().compare("any") != 0) {
+    if(event() != NULL && event()->name().compare("any") != 0) {
 
         os << "(";
         if(ve!=NULL)

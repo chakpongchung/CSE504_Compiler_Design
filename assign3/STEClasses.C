@@ -5,7 +5,11 @@
 void GlobalEntry::print(ostream& out, int indent) const
 {
     printST(out, indent,'\0', ';', true);
+    prtln(out, indent);
+
     const vector<RuleNode*> vr = rules();
+    if(vr.size() == 0)
+	prtln(out, indent);
     for(vector<RuleNode*>::const_iterator it = vr.begin(); it != vr.end(); it++)
     {
         (*it)->print(out, indent + STEP_INDENT);

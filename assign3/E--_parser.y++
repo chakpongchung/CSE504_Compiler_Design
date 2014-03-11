@@ -16,6 +16,7 @@ void prt(string s)
 {
 //	cout<<s;
 }
+
 %}
 
 %union{
@@ -159,7 +160,7 @@ ifc_decl		: class_decl TOK_SEMICOLON		{ }
 /* Class Declaration */
 class_decl		: TOK_CLASS TOK_IDENT			{
 								 $$ = new ClassEntry($2);
-								 stm.insert($$);
+								 insertSymbolErrCheck($$);
 								}
 ;
 
@@ -176,7 +177,7 @@ base_type		: TOK_INT			{ $$ = new Type(Type::TypeTag::INT); }
 			| TOK_UNSIGNED TOK_INT		{ $$ = new Type(Type::TypeTag::UINT); }
 			| TOK_IDENT			{ 
 								SymTabEntry *ste = stm.lookUp($1);
-								if(ste == nullptr) {
+								if(ste == NULL) {
 								    $$ = new Type(Type::TypeTag::UNKNOWN);
 								} else {
 								    $$ = new Type(stm.lookUp($1), Type::TypeTag::CLASS);
@@ -273,7 +274,11 @@ rule				: event_pattern TOK_ARROW		        {
 										}
 ;
 
-event_pattern			: primitive_pattern				{ $$ = new PatNode(BasePatNode::PatNodeKind::PRIMITIVE, $1); }				
+event_pattern			: primitive_pattern				{ if($1 == NULL) {
+										    $$ = new PatNode(BasePatNode::PatNodeKind::UNDEFINED, $1); }
+										  else {
+										    $$ = new PatNode(BasePatNode::PatNodeKind::PRIMITIVE, $1);} 
+										}				
 				| event_pattern TOK_PAT_STAR 			{ $$ = new PatNode(BasePatNode::PatNodeKind::STAR, $1); }
 				| TOK_NOT event_pattern				{ $$ = new PatNode(BasePatNode::PatNodeKind::NEG, $2);  }
 				| event_pattern TOK_PAT_OR event_pattern 	{ $$ = new PatNode(BasePatNode::PatNodeKind::OR, $1, $3); }
@@ -299,31 +304,40 @@ any_event			: TOK_ANY				    { $$ = new PrimitivePatNode(new EventEntry("any"),N
 
 event_decl_hdr			: TOK_EVENT TOK_IDENT					   {   
 											    $$ = new EventEntry($2);
-											    stm.insert($$);
-											    stm.enterScope($$);
+											    //insertSymbolErrCheck($$);
+											    insertSymbolErrCheck($$);
+											    enterScopeErrCheck($$);
 											    }
 ;
 
 event_decl			: event_decl_hdr formal_param_list_decl TOK_SEMICOLON			{ stm.leaveScope(); }
 
 normal_event		 	: TOK_IDENT TOK_LPAREN event_param_list_star TOK_RPAREN	    {
-										 
+											    SymTabEntry *ste = stm.lookUp($1);
 											    EventEntry *ee = NULL;
-											    const SymTab *st = NULL;
-											    if(stm.lookUp($1)!=NULL && (stm.lookUp($1)->kind() == SymTabEntry::Kind::EVENT_KIND))
+											    if(ste != NULL && (ste->kind() == SymTabEntry::Kind::EVENT_KIND))
     											    {
-											         ee = (EventEntry *)(stm.lookUp($1));
-											         vector<VariableEntry*> *ve = new vector<VariableEntry*>();
-											         st = ((SymTabEntry *)ee)->symTab();
-												 if(st) {
+											         ee = (EventEntry *)(ste);
+											    }
+
+											    vector<VariableEntry*> *ve = new vector<VariableEntry*>();
+											    if(ee!=NULL)
+											    {
+												const SymTab *st = ((SymTabEntry *)ee)->symTab();
+												 if(st!=NULL && $3!=NULL){
 													 vector<string>::const_iterator sit = $3->begin();
-													for(SymTab::const_iterator it = st->begin(); it != st->end(); ++it, ++sit)
+													for(SymTab::const_iterator it = st->begin(); it != st->end() && sit != $3->end(); ++it, ++sit)
 													{
 														VariableEntry *ve_elem = new VariableEntry(*sit,VariableEntry::VarKind::PARAM_VAR, ((VariableEntry *)(*it))->type());
 														ve->push_back(ve_elem);
 													}
-												}	
-												$$ = new PrimitivePatNode((EventEntry *)stm.lookUp($1), ve);
+												}
+												$$ = new PrimitivePatNode(ee, ve);
+											    }
+											    else
+											    {
+
+												$$ = new PrimitivePatNode(ee, new vector<VariableEntry*>());
 											    }
 										    }
 ;
@@ -358,18 +372,23 @@ statement_decl			: TOK_SEMICOLON						{ $$ = NULL; }
 
 statement_decl_list		: statement_decl					{ 
 
-											    $$ = new list<StmtNode*>;
+											    $$ = new list<StmtNode*>();
 											    if($1 != NULL)
 												$$->push_back($1);
 											}
 
 				| statement_decl_list statement_decl			{   
 												if($2 != NULL) 
-												$$->push_back($2);
+													$$->push_back($2);
 											}
 ;
 
-function_invocation		: TOK_IDENT function_invocation_list			{ $$ = new InvocationNode(stm.lookUp($1), $2); }
+function_invocation		: TOK_IDENT function_invocation_list			{ 
+											    if(stm.lookUp($1) == NULL || (stm.lookUp($1))->kind() != SymTabEntry::Kind::FUNCTION_KIND)
+												$$ = NULL;
+											    else
+												$$ = new InvocationNode(stm.lookUp($1), $2);
+											}
 ;
 
 inside_function			: exp							{ $$ = new vector<ExprNode*>();
@@ -443,7 +462,7 @@ variable_decl		: type_decl variable_name_decl TOK_SEMICOLON	 	{
 										    for(vector<VariableEntry*>::iterator it = $2->begin(); it != $2->end(); ++it) {
 											  (*it)->varKind(vk);
 											  (*it)->type($1);
-											  stm.insert(*it);
+											  insertSymbolErrCheck(*it);
 										    }
 										}
 ;
@@ -466,7 +485,7 @@ param_list			: param_decl			{
 ;
 
 param_decl			: type_decl TOK_IDENT { 
-							    stm.insert(new VariableEntry($2, VariableEntry::VarKind::PARAM_VAR, $1));
+							    insertSymbolErrCheck(new VariableEntry($2, VariableEntry::VarKind::PARAM_VAR, $1));
 						      }
 ;
 
@@ -474,7 +493,7 @@ formal_param_list_decl		: TOK_LPAREN param_list_star TOK_RPAREN		   { }
 				
 ;
 
-function_header			: type_decl TOK_IDENT			{    $$ = new FunctionEntry($2, $1); stm.insert($$); stm.enterScope($$); }
+function_header			: type_decl TOK_IDENT			{    $$ = new FunctionEntry($2, $1); insertSymbolErrCheck($$); enterScopeErrCheck($$); }
 
 function_decl_only		: function_header formal_param_list_decl		    { }
 ;
