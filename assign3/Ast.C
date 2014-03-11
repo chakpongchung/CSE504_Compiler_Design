@@ -132,17 +132,21 @@ void IfNode::print(ostream& os, int indent) const
 {
     os << "if ";
     if(cond()!=NULL)
-    {   os << "( ";
+    {   os << "(";
         cond()->print(os, indent);
         os << ") ";
     }
     if(thenStmt()!=NULL)
         thenStmt()->print(os, indent);
+    if(!thenStmt() || thenStmt()->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+	endln(os, indent);
     if(elseStmt()!=NULL)
     {
-        prtln(os, indent);
+        prtSpace(os, indent);
         os << "else";
         elseStmt()->print(os, indent);
+	if(!thenStmt() || thenStmt()->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+	    endln(os, indent);
     }
 }
 
@@ -301,8 +305,8 @@ void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
         {
             prtSpace(os, indent);
             (*it)->print(os, indent);
-            os<< ";";
-            prtln(os, indent);
+	    if((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::RETURN || (*it)->stmtNodeKind() == StmtNode::StmtNodeKind::EXPR)
+		endln(os, indent);
 
         }
     }
