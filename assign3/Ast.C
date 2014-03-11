@@ -143,7 +143,7 @@ void IfNode::print(ostream& os, int indent) const
     if(elseStmt()!=NULL)
     {
         prtSpace(os, indent);
-        os << "else";
+        os << "else ";
         elseStmt()->print(os, indent);
 	if(!thenStmt() || thenStmt()->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
 	    endln(os, indent);

@@ -35,7 +35,7 @@ void VariableEntry::print(ostream& out, int indent) const
     out << type()->fullName() << " " << name();
     if(initVal() != NULL)
     {
-        out<< "=";
+        out<< " = ";
         initVal()->print(out, indent);
     }
 }
